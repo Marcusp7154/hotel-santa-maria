@@ -34,6 +34,7 @@ export default async function PainelLayout({ children }) {
         <nav>
           <Link href="/">Hoje</Link>
           <Link href="/mapa">Mapa de ocupação</Link>
+          {['admin', 'gerente'].includes(perfil.perfil) && <Link href="/cadastros">Cadastros</Link>}
         </nav>
         <div className="usuario">
           <span>{perfil.nome} · {NOME_PERFIL[perfil.perfil]}</span>

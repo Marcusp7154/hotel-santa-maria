@@ -1,0 +1,199 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Erro, useAcao } from '../acoes';
+
+export function Abas({ admin }) {
+  const caminho = usePathname();
+  const abas = [
+    ['/cadastros/quartos', 'Quartos'],
+    ['/cadastros/produtos', 'Produtos'],
+    ...(admin ? [['/cadastros/equipe', 'Equipe']] : []),
+  ];
+  return (
+    <nav className="abas">
+      {abas.map(([href, nome]) => (
+        <Link key={href} href={href} className={caminho.startsWith(href) ? 'ativa' : ''}>{nome}</Link>
+      ))}
+    </nav>
+  );
+}
+
+function valorInicial(campos, inicial) {
+  const v = {};
+  for (const c of campos) {
+    const atual = inicial?.[c.nome];
+    v[c.nome] = c.tipo === 'check' ? (atual ?? c.padrao ?? true) : (atual ?? c.padrao ?? '');
+  }
+  return v;
+}
+
+function converter(campos, valores) {
+  const linha = {};
+  for (const c of campos) {
+    if (c.bloqueado) continue;
+    let v = valores[c.nome];
+    if (c.tipo === 'numero') v = v === '' || v === null ? null : Number(String(v).replace(',', '.'));
+    if (c.tipo === 'texto' || c.tipo === 'select') v = typeof v === 'string' ? v.trim() || null : v;
+    linha[c.nome] = v;
+  }
+  return linha;
+}
+
+/**
+ * Formulário de uma linha de cadastro. Sem `id`, cria um registro novo; com `id`, salva alterações.
+ * campos: [{ nome, rotulo, tipo: 'texto'|'numero'|'select'|'check', opcoes: [[valor, rotulo]], largo, obrigatorio, passo, bloqueado }]
+ */
+export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar }) {
+  const { ocupado, erro, setErro, rodar } = useAcao();
+  const [valores, setValores] = useState(() => valorInicial(campos, inicial));
+  const [salvo, setSalvo] = useState(false);
+  const mudar = (nome, v) => { setValores((x) => ({ ...x, [nome]: v })); setSalvo(false); };
+  const inativo = 'ativo' in valores && !valores.ativo;
+
+  async function salvar(e) {
+    e.preventDefault();
+    for (const c of campos) {
+      if (c.obrigatorio && (valores[c.nome] === '' || valores[c.nome] === null)) {
+        setErro(`Preencha: ${c.rotulo}.`);
+        return;
+      }
+    }
+    const linha = converter(campos, valores);
+    const r = await rodar((sb) => (id ? sb.from(tabela).update(linha).eq('id', id) : sb.from(tabela).insert(linha)));
+    if (r.ok) {
+      if (id) setSalvo(true);
+      else setValores(valorInicial(campos, null));
+    }
+  }
+
+  return (
+    <form className={`form-linha${inativo ? ' inativo' : ''}`} onSubmit={salvar}>
+      {campos.map((c) => {
+        const idCampo = `${tabela}-${id || 'novo'}-${c.nome}`;
+        if (c.tipo === 'check') {
+          return (
+            <label key={c.nome} className="marcar">
+              <input type="checkbox" checked={!!valores[c.nome]} disabled={c.bloqueado || ocupado}
+                     onChange={(e) => mudar(c.nome, e.target.checked)} />
+              {c.rotulo}
+            </label>
+          );
+        }
+        return (
+          <div key={c.nome} className={`campo${c.largo ? ' largo' : ''}`}>
+            <label htmlFor={idCampo}>{c.rotulo}</label>
+            {c.tipo === 'select' ? (
+              <select id={idCampo} value={valores[c.nome] ?? ''} disabled={c.bloqueado || ocupado}
+                      onChange={(e) => mudar(c.nome, e.target.value)}>
+                {!c.obrigatorio && <option value="">—</option>}
+                {c.obrigatorio && !valores[c.nome] && <option value="">Escolher…</option>}
+                {c.opcoes.map(([v, rot]) => <option key={v} value={v}>{rot}</option>)}
+              </select>
+            ) : (
+              <input id={idCampo} type={c.tipo === 'numero' ? 'number' : 'text'} step={c.passo ?? (c.tipo === 'numero' ? '0.01' : undefined)}
+                     min={c.tipo === 'numero' ? 0 : undefined} value={valores[c.nome] ?? ''} disabled={c.bloqueado || ocupado}
+                     onChange={(e) => mudar(c.nome, e.target.value)} />
+            )}
+          </div>
+        );
+      })}
+      <button type="submit" className={id ? '' : 'primario'} disabled={ocupado}>
+        {ocupado ? 'Salvando…' : rotuloSalvar || (id ? 'Salvar' : 'Adicionar')}
+      </button>
+      {salvo && <span className="mensagem ok">Salvo</span>}
+      <Erro texto={erro} />
+    </form>
+  );
+}
+
+async function chamarEquipe(metodo, corpo) {
+  const r = await fetch('/api/equipe', {
+    method: metodo,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corpo),
+  });
+  const j = await r.json().catch(() => ({}));
+  return r.ok ? { data: j } : { error: { message: j.erro || 'Não foi possível concluir.' } };
+}
+
+const OPCOES_PERFIL = [
+  ['recepcao', 'Recepção'],
+  ['governanca', 'Governança'],
+  ['gerente', 'Gerente'],
+  ['admin', 'Administrador'],
+];
+
+export function NovoMembro() {
+  const { ocupado, erro, rodar } = useAcao();
+  const vazio = { nome: '', email: '', senha: '', perfil: 'recepcao' };
+  const [v, setV] = useState(vazio);
+  const [feito, setFeito] = useState(null);
+  const mudar = (k, x) => setV((s) => ({ ...s, [k]: x }));
+
+  return (
+    <form className="form-linha" onSubmit={async (e) => {
+      e.preventDefault();
+      setFeito(null);
+      const r = await rodar(() => chamarEquipe('POST', v));
+      if (r.ok) { setFeito(`Login criado para ${v.email}. Passe a senha provisória para a pessoa.`); setV(vazio); }
+    }}>
+      <div className="campo largo"><label htmlFor="nm-nome">Nome</label>
+        <input id="nm-nome" value={v.nome} onChange={(e) => mudar('nome', e.target.value)} required /></div>
+      <div className="campo largo"><label htmlFor="nm-email">E-mail (login)</label>
+        <input id="nm-email" type="email" value={v.email} onChange={(e) => mudar('email', e.target.value)} required /></div>
+      <div className="campo"><label htmlFor="nm-senha">Senha provisória</label>
+        <input id="nm-senha" type="text" minLength={8} value={v.senha} onChange={(e) => mudar('senha', e.target.value)} required /></div>
+      <div className="campo"><label htmlFor="nm-perfil">Perfil</label>
+        <select id="nm-perfil" value={v.perfil} onChange={(e) => mudar('perfil', e.target.value)}>
+          {OPCOES_PERFIL.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
+        </select></div>
+      <button type="submit" className="primario" disabled={ocupado}>{ocupado ? 'Criando…' : 'Criar login'}</button>
+      {feito && <span className="mensagem ok">{feito}</span>}
+      <Erro texto={erro} />
+    </form>
+  );
+}
+
+export function MembroEquipe({ membro, email, souEu }) {
+  return (
+    <div style={{ borderBottom: '1px solid var(--borda)' }}>
+      <div className="nota" style={{ paddingBottom: 0 }}>
+        <b>{email || 'e-mail não disponível'}</b>{souEu && ' · você'}
+      </div>
+      <RegistroForm
+        tabela="perfis"
+        id={membro.id}
+        inicial={membro}
+        campos={[
+          { nome: 'nome', rotulo: 'Nome', tipo: 'texto', largo: true, obrigatorio: true },
+          { nome: 'perfil', rotulo: 'Perfil', tipo: 'select', opcoes: OPCOES_PERFIL, obrigatorio: true, bloqueado: souEu },
+          { nome: 'ativo', rotulo: 'Pode entrar no sistema', tipo: 'check', bloqueado: souEu },
+        ]}
+      />
+      <TrocarSenha id={membro.id} />
+    </div>
+  );
+}
+
+function TrocarSenha({ id }) {
+  const { ocupado, erro, rodar } = useAcao();
+  const [senha, setSenha] = useState('');
+  const [feito, setFeito] = useState(false);
+  return (
+    <form className="form-linha" style={{ borderBottom: 0, paddingTop: 0 }} onSubmit={async (e) => {
+      e.preventDefault();
+      setFeito(false);
+      const r = await rodar(() => chamarEquipe('PATCH', { id, senha }));
+      if (r.ok) { setFeito(true); setSenha(''); }
+    }}>
+      <div className="campo"><label htmlFor={`senha-${id}`}>Nova senha</label>
+        <input id={`senha-${id}`} type="text" minLength={8} value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="mín. 8 caracteres" /></div>
+      <button type="submit" disabled={ocupado || senha.length < 8}>Trocar senha</button>
+      {feito && <span className="mensagem ok">Senha trocada</span>}
+      <Erro texto={erro} />
+    </form>
+  );
+}

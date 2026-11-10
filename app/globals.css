@@ -172,6 +172,41 @@ input[type='number'] { width: 96px; }
 .legenda { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--texto-2); align-items: center; }
 .legenda .barra { display: inline-block; padding: 1px 10px; }
 
+/* Tabelas (notinha e cadastros) */
+.tabela { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabela th, .tabela td { padding: 8px 14px; border-bottom: 1px solid var(--borda); text-align: left; vertical-align: top; }
+.tabela th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--texto-2); font-weight: 650; }
+.tabela .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tabela tr.estorno td { color: var(--texto-2); }
+.tabela-rolagem { overflow-x: auto; }
+.notinha { max-width: 760px; }
+.notinha > header small { display: block; margin-top: 2px; }
+.totais .linha span, .totais .linha b { font-variant-numeric: tabular-nums; }
+.saldo-final { border-top: 1px solid var(--borda); padding-top: 8px; font-size: 17px; }
+.saldo-final .deve { color: var(--erro); }
+
+/* Cadastros */
+.abas { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
+.abas a { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--borda); background: var(--superficie); color: var(--texto-2); font-weight: 600; }
+.abas a.ativa { background: var(--marca); border-color: var(--marca); color: var(--superficie); }
+.form-linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; padding: 12px 14px; border-bottom: 1px solid var(--borda); }
+.form-linha:last-child { border-bottom: 0; }
+.form-linha.inativo { opacity: 0.6; }
+.form-linha .campo input:not([type='number']):not([type='checkbox']), .form-linha .campo select { min-width: 140px; }
+.form-linha .campo.largo { flex: 1; min-width: 180px; }
+.form-linha .campo.largo input { width: 100%; }
+.marcar { display: flex; gap: 6px; align-items: center; font-size: 14px; padding-bottom: 7px; }
+.nota { padding: 10px 14px; font-size: 13px; color: var(--texto-2); }
+
+@media print {
+  .topo, .nao-imprimir { display: none !important; }
+  body { background: #fff; color: #000; font-size: 12px; }
+  .conteudo { padding: 0; max-width: none; }
+  .bloco { border: 0; box-shadow: none; }
+  .notinha { max-width: none; }
+  .etiqueta { border: 1px solid #999; background: none !important; color: #000 !important; }
+}
+
 @media (max-width: 640px) {
   .topo { padding: 10px 16px; }
   .topo .usuario { margin-left: 0; width: 100%; justify-content: space-between; }

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { brl, dataCurta, dataLonga, NOME_STATUS_QUARTO, NOME_STATUS_RESERVA, ordenarQuartos } from '@/lib/formato';
 import {
@@ -80,12 +81,13 @@ export default async function Hoje() {
         </div>
         {financeiro && conta && (
           <>
-            <LancarConsumo contaId={conta.conta_id} produtos={produtos} />
+            <LancarConsumo contaId={conta.conta_id} produtos={produtos} temTurno={!!turno} />
             {saldo > 0 && <Receber contaId={conta.conta_id} saldo={saldo} temTurno={!!turno} />}
           </>
         )}
         {financeiro && (
           <div className="acoes">
+            {conta && <Link className="botao" href={`/conta/${conta.conta_id}`}>Notinha</Link>}
             <BotaoCheckout reservaId={r.id} codigo={r.codigo} />
             {saindo && <span className="etiqueta sujo">Sai hoje</span>}
           </div>

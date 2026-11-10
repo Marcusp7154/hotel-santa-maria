@@ -6,8 +6,10 @@ Painel web (Next.js 15 + Supabase) da fase 1 do sistema de gestão do hotel.
 
 - **Login** da equipe com e-mail e senha (usuários criados no Supabase).
 - **Hoje**: ocupação, chegadas, saídas, hospedados, saldo de cada conta, atribuição de quarto,
-  check-in, lançamento de consumo, recebimento (dinheiro, Pix, débito, crédito, transferência),
-  check-out, auditoria noturna e o status de cada quarto para a governança.
+  check-in, venda de produtos (para pagar na saída ou pago na hora), recebimento (dinheiro, Pix,
+  débito, crédito, transferência), check-out, auditoria noturna e o status de cada quarto.
+- **Notinha**: tudo o que o hóspede consumiu, o que já pagou e o saldo, pronta para imprimir.
+- **Cadastros**: tipos de quarto e quartos, produtos e equipe (logins e perfis).
 - **Meu caixa**: abrir turno, sangria e suprimento, dinheiro esperado na gaveta e fechamento com diferença.
 - **Mapa de ocupação**: 14 dias por quartos, agrupado por tipo, navegando de 7 em 7 dias.
 
@@ -28,6 +30,18 @@ As regras ficam no banco (arquivo `hotel_fase1.sql`), então valem mesmo fora do
 
 Toda alteração enviada ao GitHub é publicada automaticamente pela Vercel em cerca de 1 minuto.
 
+## Atualização 2: cadastros, notinha e venda na recepção
+
+1. **Banco**: no Supabase, *SQL Editor > New query*, cole o arquivo `hotel_fase1b.sql` e clique em *Run*.
+2. **Chave secreta** (para o administrador criar logins da equipe pelo sistema):
+   - No Supabase, *Project Settings > API Keys*, copie a **Secret key** (começa com `sb_secret_`).
+     Não compartilhe essa chave com ninguém nem coloque no código.
+   - Na Vercel, abra o projeto > *Settings > Environment Variables* > *Add*:
+     nome `SUPABASE_SECRET_KEY`, valor = a chave copiada, ambientes *Production* e *Preview*. Salve.
+   - Em *Deployments*, nos três pontinhos do último deploy, clique em *Redeploy* para a chave valer.
+3. **Fechar o cadastro público**: no Supabase, *Authentication > Sign In / Providers*, desligue
+   *Allow new users to sign up*. Assim só o administrador cria logins.
+
 ## Rodar no próprio computador (opcional)
 
 Precisa do Node.js 20 ou mais novo.
@@ -41,15 +55,9 @@ Abra http://localhost:3000.
 
 ## Cadastrar a equipe
 
-1. No Supabase, *Authentication > Users > Add user*: crie o login (e-mail e senha).
-2. No *SQL Editor*, ligue o login ao hotel com o perfil certo (`gerente`, `recepcao` ou `governanca`):
-
-```sql
-insert into public.perfis (id, hotel_id, nome, perfil)
-select u.id, h.id, 'Nome da pessoa', 'recepcao'
-from auth.users u, public.hoteis h
-where u.email = 'email-da-pessoa@exemplo.com' and h.nome = 'Hotel Santa Maria';
-```
+Pelo sistema: *Cadastros > Equipe* (só o administrador vê). Informe nome, e-mail, uma senha
+provisória e o perfil. Depois, passe a senha para a pessoa. Na mesma tela dá para trocar a senha,
+mudar o perfil ou tirar o acesso de quem saiu.
 
 ## Estrutura
 
@@ -61,9 +69,12 @@ app/
   (painel)/page.jsx     tela Hoje
   (painel)/acoes.jsx    botões e formulários (check-in, caixa, consumo…)
   (painel)/mapa/        mapa de ocupação
+  (painel)/conta/[id]/  notinha do hóspede (itens, pagamentos, saldo, imprimir)
+  (painel)/cadastros/   quartos, produtos e equipe
+  api/equipe/route.js   cria logins e troca senhas (usa a chave secreta, só no servidor)
 lib/
   config.js             endereço e chave pública do Supabase
   formato.js            datas, moeda e nomes dos status
-  supabase/             conexão com o Supabase (navegador e servidor)
+  supabase/             conexão com o Supabase (navegador, servidor e admin)
 middleware.js           mantém a sessão e protege as páginas
 ```

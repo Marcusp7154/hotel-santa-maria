@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { brl, NOME_FORMA, NOME_STATUS_QUARTO } from '@/lib/formato';
 
 // Roda uma chamada ao Supabase, mostra o erro em português e atualiza a tela
-function useAcao() {
+export function useAcao() {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState(null);
@@ -32,8 +32,12 @@ function useAcao() {
   return { ocupado, erro, setErro, rodar };
 }
 
-function Erro({ texto }) {
+export function Erro({ texto }) {
   return texto ? <div className="mensagem erro">{texto}</div> : null;
+}
+
+export function BotaoImprimir() {
+  return <button className="nao-imprimir" onClick={() => window.print()}>Imprimir notinha</button>;
 }
 
 export function AtribuirQuarto({ reservaQuartoId, quartoAtual, opcoes }) {
@@ -134,35 +138,56 @@ export function Receber({ contaId, saldo, temTurno }) {
   );
 }
 
-export function LancarConsumo({ contaId, produtos }) {
+// Venda na recepção: fica na notinha para acertar na saída, ou já é paga na hora
+export function LancarConsumo({ contaId, produtos, temTurno }) {
   const { ocupado, erro, rodar } = useAcao();
   const [produtoId, setProdutoId] = useState('');
   const [quantidade, setQuantidade] = useState(1);
+  const [pagamento, setPagamento] = useState('saida');
+  const [feito, setFeito] = useState(null);
 
-  if (!produtos.length) return null;
+  if (!produtos.length) return <small>Cadastre produtos em Cadastros &gt; Produtos para vender.</small>;
 
-  async function lancar(e) {
+  const produto = produtos.find((x) => x.id === produtoId);
+  const total = produto ? Number(produto.preco) * (Number(quantidade) || 0) : 0;
+
+  async function vender(e) {
     e.preventDefault();
-    const p = produtos.find((x) => x.id === produtoId);
-    if (!p) return;
+    if (!produto) return;
+    setFeito(null);
     const r = await rodar((sb) =>
-      sb.from('lancamentos').insert({
-        conta_id: contaId, tipo: 'consumo', descricao: p.nome, produto_id: p.id,
-        quantidade: Number(quantidade) || 1, valor_unitario: p.preco,
+      sb.rpc('fn_lancar_consumo', {
+        p_conta: contaId,
+        p_produto: produto.id,
+        p_quantidade: Number(quantidade) || 1,
+        p_forma: pagamento === 'saida' ? null : pagamento,
       }),
     );
-    if (r.ok) { setProdutoId(''); setQuantidade(1); }
+    if (r.ok) {
+      setFeito(`${quantidade}× ${produto.nome} (${brl(r.data.valor)}) ${r.data.pago_na_hora ? 'pago na hora' : 'na notinha'}.`);
+      setProdutoId('');
+      setQuantidade(1);
+      setPagamento('saida');
+    }
   }
 
   return (
-    <form className="acoes" onSubmit={lancar}>
+    <form className="acoes" onSubmit={vender}>
       <select value={produtoId} onChange={(e) => setProdutoId(e.target.value)} disabled={ocupado}>
-        <option value="">Consumo…</option>
+        <option value="">Vender produto…</option>
         {produtos.map((p) => <option key={p.id} value={p.id}>{p.nome} · {brl(p.preco)}</option>)}
       </select>
-      <input type="number" min="1" step="1" value={quantidade} style={{ width: 64 }}
+      <input type="number" min="1" step="1" value={quantidade} style={{ width: 64 }} aria-label="Quantidade"
              onChange={(e) => setQuantidade(e.target.value)} disabled={ocupado} />
-      <button type="submit" disabled={ocupado || !produtoId}>Lançar</button>
+      <select value={pagamento} onChange={(e) => setPagamento(e.target.value)} disabled={ocupado} aria-label="Pagamento">
+        <option value="saida">Pagar na saída</option>
+        {temTurno && Object.entries(NOME_FORMA).map(([k, nome]) => <option key={k} value={k}>Pago agora · {nome}</option>)}
+      </select>
+      <button type="submit" disabled={ocupado || !produto}>
+        {produto ? `Vender ${brl(total)}` : 'Vender'}
+      </button>
+      {!temTurno && <small>Abra seu caixa para receber na hora.</small>}
+      {feito && <span className="mensagem ok">{feito}</span>}
       <Erro texto={erro} />
     </form>
   );
