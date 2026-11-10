@@ -40,7 +40,7 @@ export default async function Hoje() {
     supabase.from('quartos').select('id, numero, andar, status, tipo_quarto_id, tipos_quarto ( nome )').eq('ativo', true),
     supabase.rpc('fn_relatorio_dia'),
     financeiro ? supabase.from('v_contas_saldo').select('conta_id, reserva_id, saldo').eq('status', 'aberta') : { data: [] },
-    financeiro ? supabase.from('produtos').select('id, nome, preco').eq('ativo', true).order('nome') : { data: [] },
+    financeiro ? supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome') : { data: [] },
     financeiro ? supabase.from('turnos_caixa').select('id, aberto_em').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle() : { data: null },
   ]);
 

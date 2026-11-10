@@ -9,12 +9,21 @@ Painel web (Next.js 15 + Supabase) da fase 1 do sistema de gestão do hotel.
   check-in, venda de produtos (para pagar na saída ou pago na hora), recebimento (dinheiro, Pix,
   débito, crédito, transferência), check-out, auditoria noturna e o status de cada quarto.
 - **Notinha**: tudo o que o hóspede consumiu, o que já pagou e o saldo, pronta para imprimir.
-- **Cadastros**: tipos de quarto e quartos, produtos e equipe (logins e perfis).
+- **Cadastros**: tipos de quarto e quartos, produtos com estoque e equipe (logins e perfis).
+- **Estoque**: entrada de mercadoria, ajuste pela contagem e perda; baixa automática a cada venda,
+  devolução quando a venda é estornada, bloqueio de venda sem saldo e aviso de estoque baixo.
 - **Meu caixa**: abrir turno, sangria e suprimento, dinheiro esperado na gaveta e fechamento com diferença.
 - **Mapa de ocupação**: 14 dias por quartos, agrupado por tipo, navegando de 7 em 7 dias.
 
 Cada perfil vê só o que pode: a governança não vê nada financeiro; recepção não mexe em cadastros.
-As regras ficam no banco (arquivo `hotel_fase1.sql`), então valem mesmo fora do painel.
+As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
+
+## Scripts do banco (rodar no SQL Editor do Supabase, uma vez cada, nesta ordem)
+
+1. `banco/hotel_fase1.sql`: estrutura, regras e permissões.
+2. `banco/hotel_fase1b.sql`: venda com pagamento no ato.
+3. `banco/hotel_fase1c.sql`: controle de estoque. Produtos que já existiam ficam sem controle
+   até você marcar "Controlar estoque" e lançar a entrada.
 
 ## Publicar na Vercel
 

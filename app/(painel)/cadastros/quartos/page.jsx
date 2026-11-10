@@ -39,8 +39,9 @@ export default async function CadastroQuartos() {
           A diária vale para as pessoas inclusas; cada pessoa a mais soma o valor de pessoa extra.
           Para desativar um tipo, desmarque "Ativo" (tipos com reservas não podem ser apagados).
         </p>
-        {tipos.map((t) => <RegistroForm key={t.id} tabela="tipos_quarto" id={t.id} inicial={t} campos={CAMPOS_TIPO} />)}
         <RegistroForm tabela="tipos_quarto" campos={CAMPOS_TIPO} rotuloSalvar="Adicionar tipo" />
+        {tipos.length > 0 && <div className="subtitulo">Tipos cadastrados</div>}
+        {tipos.map((t) => <RegistroForm key={t.id} tabela="tipos_quarto" id={t.id} inicial={t} campos={CAMPOS_TIPO} />)}
       </section>
 
       <section className="bloco">
@@ -53,8 +54,9 @@ export default async function CadastroQuartos() {
               Quarto fora de uso (reforma, por exemplo): desmarque "Em uso" e ele sai do mapa e das vendas.
               O status de limpeza é mudado na tela Hoje.
             </p>
-            {quartos.map((q) => <RegistroForm key={q.id} tabela="quartos" id={q.id} inicial={q} campos={camposQuarto} />)}
             <RegistroForm tabela="quartos" campos={camposQuarto} rotuloSalvar="Adicionar quarto" />
+            {quartos.length > 0 && <div className="subtitulo">Quartos cadastrados</div>}
+            {quartos.map((q) => <RegistroForm key={q.id} tabela="quartos" id={q.id} inicial={q} campos={camposQuarto} />)}
           </>
         )}
       </section>

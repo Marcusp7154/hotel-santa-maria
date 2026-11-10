@@ -150,6 +150,8 @@ export function LancarConsumo({ contaId, produtos, temTurno }) {
 
   const produto = produtos.find((x) => x.id === produtoId);
   const total = produto ? Number(produto.preco) * (Number(quantidade) || 0) : 0;
+  const disponivel = (p) => (p.controla_estoque ? Number(p.estoque_atual) : Infinity);
+  const semSaldo = produto && Number(quantidade) > disponivel(produto);
 
   async function vender(e) {
     e.preventDefault();
@@ -175,7 +177,15 @@ export function LancarConsumo({ contaId, produtos, temTurno }) {
     <form className="acoes" onSubmit={vender}>
       <select value={produtoId} onChange={(e) => setProdutoId(e.target.value)} disabled={ocupado}>
         <option value="">Vender produto…</option>
-        {produtos.map((p) => <option key={p.id} value={p.id}>{p.nome} · {brl(p.preco)}</option>)}
+        {produtos.map((p) => {
+          const resta = disponivel(p);
+          return (
+            <option key={p.id} value={p.id} disabled={resta <= 0}>
+              {p.nome} · {brl(p.preco)}
+              {p.controla_estoque ? (resta > 0 ? ` · ${resta.toLocaleString('pt-BR')} em estoque` : ' · esgotado') : ''}
+            </option>
+          );
+        })}
       </select>
       <input type="number" min="1" step="1" value={quantidade} style={{ width: 64 }} aria-label="Quantidade"
              onChange={(e) => setQuantidade(e.target.value)} disabled={ocupado} />
@@ -183,9 +193,10 @@ export function LancarConsumo({ contaId, produtos, temTurno }) {
         <option value="saida">Pagar na saída</option>
         {temTurno && Object.entries(NOME_FORMA).map(([k, nome]) => <option key={k} value={k}>Pago agora · {nome}</option>)}
       </select>
-      <button type="submit" disabled={ocupado || !produto}>
+      <button type="submit" disabled={ocupado || !produto || semSaldo}>
         {produto ? `Vender ${brl(total)}` : 'Vender'}
       </button>
+      {semSaldo && <span className="mensagem aviso">Só há {disponivel(produto).toLocaleString('pt-BR')} em estoque.</span>}
       {!temTurno && <small>Abra seu caixa para receber na hora.</small>}
       {feito && <span className="mensagem ok">{feito}</span>}
       <Erro texto={erro} />

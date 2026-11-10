@@ -29,7 +29,7 @@ export default async function Notinha({ params }) {
       .select('id, forma, valor, lancamento_id, estorno_de, criado_em')
       .eq('conta_id', id).order('criado_em'),
     supabase.from('hoteis').select('nome, cnpj, endereco, cidade, uf, telefone').maybeSingle(),
-    supabase.from('produtos').select('id, nome, preco').eq('ativo', true).order('nome'),
+    supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome'),
     supabase.from('turnos_caixa').select('id').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle(),
   ]);
 

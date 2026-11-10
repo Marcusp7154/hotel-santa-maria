@@ -70,7 +70,7 @@ export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar }) {
   }
 
   return (
-    <form className={`form-linha${inativo ? ' inativo' : ''}`} onSubmit={salvar}>
+    <form className={`form-linha${inativo ? ' inativo' : ''}${id ? '' : ' novo'}`} onSubmit={salvar}>
       {campos.map((c) => {
         const idCampo = `${tabela}-${id || 'novo'}-${c.nome}`;
         if (c.tipo === 'check') {
@@ -104,6 +104,70 @@ export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar }) {
         {ocupado ? 'Salvando…' : rotuloSalvar || (id ? 'Salvar' : 'Adicionar')}
       </button>
       {salvo && <span className="mensagem ok">Salvo</span>}
+      <Erro texto={erro} />
+    </form>
+  );
+}
+
+const ACOES_ESTOQUE = {
+  entrada: { rotulo: 'Entrada (compra)', campo: 'Quantidade que entrou', funcao: 'fn_entrada_estoque' },
+  ajuste: { rotulo: 'Ajustar pela contagem', campo: 'Quantidade contada', funcao: 'fn_ajustar_estoque' },
+  perda: { rotulo: 'Perda / quebra', campo: 'Quantidade perdida', funcao: 'fn_perda_estoque' },
+};
+
+// Entrada, ajuste de contagem ou perda de um produto
+export function MovimentarEstoque({ produtoId }) {
+  const { ocupado, erro, rodar } = useAcao();
+  const [acao, setAcao] = useState('entrada');
+  const [qtd, setQtd] = useState('');
+  const [custo, setCusto] = useState('');
+  const [motivo, setMotivo] = useState('');
+  const [feito, setFeito] = useState(null);
+  const num = (v) => Number(String(v).replace(',', '.'));
+  const a = ACOES_ESTOQUE[acao];
+
+  async function registrar(e) {
+    e.preventDefault();
+    setFeito(null);
+    if (qtd === '') return;
+    const args =
+      acao === 'entrada'
+        ? { p_produto: produtoId, p_quantidade: num(qtd), p_custo_unitario: custo === '' ? null : num(custo), p_motivo: motivo || null }
+        : acao === 'ajuste'
+          ? { p_produto: produtoId, p_contagem: num(qtd), p_motivo: motivo }
+          : { p_produto: produtoId, p_quantidade: num(qtd), p_motivo: motivo };
+    const r = await rodar((sb) => sb.rpc(a.funcao, args));
+    if (r.ok) {
+      setFeito(`Registrado. Estoque agora: ${Number(r.data.saldo_apos).toLocaleString('pt-BR')}.`);
+      setQtd(''); setCusto(''); setMotivo('');
+    }
+  }
+
+  return (
+    <form className="movimento-estoque" onSubmit={registrar}>
+      <div className="campo">
+        <label htmlFor={`acao-${produtoId}`}>Movimentar estoque</label>
+        <select id={`acao-${produtoId}`} value={acao} onChange={(e) => { setAcao(e.target.value); setFeito(null); }} disabled={ocupado}>
+          {Object.entries(ACOES_ESTOQUE).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
+        </select>
+      </div>
+      <div className="campo">
+        <label htmlFor={`qtd-${produtoId}`}>{a.campo}</label>
+        <input id={`qtd-${produtoId}`} type="number" step="1" min="0" value={qtd} onChange={(e) => setQtd(e.target.value)} disabled={ocupado} />
+      </div>
+      {acao === 'entrada' && (
+        <div className="campo">
+          <label htmlFor={`custo-${produtoId}`}>Custo unitário (R$)</label>
+          <input id={`custo-${produtoId}`} type="number" step="0.01" min="0" value={custo} onChange={(e) => setCusto(e.target.value)} disabled={ocupado} />
+        </div>
+      )}
+      <div className="campo largo">
+        <label htmlFor={`motivo-${produtoId}`}>{acao === 'entrada' ? 'Fornecedor / nota (opcional)' : 'Motivo'}</label>
+        <input id={`motivo-${produtoId}`} value={motivo} onChange={(e) => setMotivo(e.target.value)} disabled={ocupado}
+               required={acao !== 'entrada'} style={{ width: '100%' }} />
+      </div>
+      <button type="submit" disabled={ocupado || qtd === ''}>{ocupado ? 'Registrando…' : 'Registrar'}</button>
+      {feito && <span className="mensagem ok">{feito}</span>}
       <Erro texto={erro} />
     </form>
   );

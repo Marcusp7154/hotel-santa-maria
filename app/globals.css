@@ -192,6 +192,16 @@ input[type='number'] { width: 96px; }
 .form-linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; padding: 12px 14px; border-bottom: 1px solid var(--borda); }
 .form-linha:last-child { border-bottom: 0; }
 .form-linha.inativo { opacity: 0.6; }
+.form-linha.novo { background: var(--marca-suave); }
+.subtitulo { padding: 8px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--texto-2); background: var(--superficie-2); border-bottom: 1px solid var(--borda); }
+.estoque { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.estoque.baixo { color: var(--erro); }
+.produto-bloco { border-bottom: 1px solid var(--borda); }
+.produto-bloco:last-child { border-bottom: 0; }
+.produto-bloco .form-linha { border-bottom: 0; }
+.produto-bloco .cabeca-produto { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 10px 14px 0; }
+.movimento-estoque { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; padding: 0 14px 12px; }
+.movimento-estoque .campo.largo { flex: 1; min-width: 180px; }
 .form-linha .campo input:not([type='number']):not([type='checkbox']), .form-linha .campo select { min-width: 140px; }
 .form-linha .campo.largo { flex: 1; min-width: 180px; }
 .form-linha .campo.largo input { width: 100%; }
