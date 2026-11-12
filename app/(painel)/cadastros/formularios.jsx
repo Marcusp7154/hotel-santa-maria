@@ -99,6 +99,34 @@ function Campos({ campos, valores, mudar, ocupado, prefixo }) {
 }
 
 /**
+ * Botão "+ Novo …" que abre um formulário próprio (o mesmo visual do RegistroForm),
+ * para telas cujo formulário não é um cadastro simples de uma tabela.
+ */
+export function NovoCadastro({ rotulo, children, abertoInicial = false }) {
+  const [aberto, setAberto] = useState(abertoInicial);
+  if (!aberto) {
+    return (
+      <div className="novo-area">
+        <button type="button" className="novo-registro" onClick={() => setAberto(true)}>
+          <span aria-hidden="true">+</span> {rotulo}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="novo-area">
+      <div className="registro editando">
+        <div className="registro-topo">
+          <b className="registro-titulo-form">{rotulo}</b>
+          <button type="button" className="fantasma" onClick={() => setAberto(false)}>Fechar</button>
+        </div>
+        <div className="registro-form-livre">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Cadastro em cartão. Sem `id`: botão "+ Novo" que abre o formulário. Com `id`: cartão com os dados e botão Editar.
  * campos: [{ nome, rotulo, tipo: 'texto'|'numero'|'data'|'select'|'check', opcoes: [[valor, rotulo]], largo, obrigatorio,
  *            passo, bloqueado, moeda,

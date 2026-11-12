@@ -1,11 +1,17 @@
 import { dataBR, mesValido, primeiroDia, TIPOS_OCORRENCIA, ultimoDia } from '@/lib/rh';
+import { NovoCadastro } from '../../cadastros/formularios';
 import { contexto, SemAcesso } from '../acesso';
 import { Apagar, NovaOcorrencia } from '../componentes';
 import { SeletorMes } from '../seletor-mes';
 
 export const dynamic = 'force-dynamic';
 
-const CLASSE = { falta: 'sujo', atestado: 'pre_reserva', atraso: 'confirmada', saida_antecipada: 'confirmada', folga_extra: 'finalizada' };
+const COR_TIPO = { falta: 'marca', atestado: 'ambar', atraso: 'azul', saida_antecipada: 'azul', folga_extra: 'verde' };
+
+function iniciais(nome = '') {
+  const p = nome.trim().split(/\s+/).filter(Boolean);
+  return ((p[0]?.[0] || '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase() || '?';
+}
 
 export default async function Ocorrencias({ searchParams }) {
   const params = await searchParams;
@@ -23,48 +29,47 @@ export default async function Ocorrencias({ searchParams }) {
   const contar = (t) => ocorrencias.filter((o) => o.tipo === t).reduce((s, o) => s + (o.minutos ? 1 : o.dias), 0);
 
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <section className="bloco">
-        <header><h2>Registrar falta, atraso ou atestado</h2></header>
-        <p className="nota">
-          Falta, atestado e folga extra aparecem na escala. O desconto no salário é decidido pelo administrador
-          na aba Salários.
-        </p>
-        <NovaOcorrencia funcionarios={funcR.data || []} hoje={hoje} />
-      </section>
-
-      <section className="bloco">
-        <header>
-          <h2>Registros do mês</h2>
-          <SeletorMes base="/funcionarios/ocorrencias" mes={mes} />
-        </header>
+    <section className="bloco">
+      <header>
+        <h2>Faltas, atrasos e atestados</h2>
+        <SeletorMes base="/funcionarios/ocorrencias" mes={mes} />
+      </header>
+      <p className="nota">
+        Falta, atestado e folga extra aparecem na escala. O desconto no salário é decidido pelo administrador na aba Salários.
         {ocorrencias.length > 0 && (
-          <p className="nota">
-            {contar('falta')} dia(s) de falta · {contar('atestado')} dia(s) de atestado · {contar('atraso') + contar('saida_antecipada')} atraso(s) ou saída(s) antecipada(s)
-          </p>
+          <> Neste mês: {contar('falta')} dia(s) de falta, {contar('atestado')} de atestado e {contar('atraso') + contar('saida_antecipada')} atraso(s) ou saída(s) antecipada(s).</>
         )}
-        {ocorrencias.length === 0 ? (
-          <div className="vazio">Nada registrado neste mês.</div>
-        ) : (
-          <div className="tabela-rolagem">
-            <table className="tabela">
-              <thead><tr><th>Data</th><th>Funcionário</th><th>Tipo</th><th>Duração</th><th>Observação</th><th /></tr></thead>
-              <tbody>
-                {ocorrencias.map((o) => (
-                  <tr key={o.id}>
-                    <td>{dataBR(o.data)}</td>
-                    <td>{o.funcionarios?.nome}</td>
-                    <td><span className={`etiqueta ${CLASSE[o.tipo]}`}>{TIPOS_OCORRENCIA[o.tipo]}</span></td>
-                    <td>{o.minutos ? `${o.minutos} min` : `${o.dias} dia${o.dias > 1 ? 's' : ''}`}</td>
-                    <td>{o.observacao}</td>
-                    <td><Apagar tabela="ocorrencias" id={o.id} pergunta="Apagar este registro? Se já foi descontado, o desconto continua no salário." /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </div>
+      </p>
+      <NovoCadastro rotulo="Registrar falta, atraso ou atestado">
+        <NovaOcorrencia funcionarios={funcR.data || []} hoje={hoje} />
+      </NovoCadastro>
+      {ocorrencias.length === 0 ? (
+        <div className="vazio">Nada registrado neste mês.</div>
+      ) : (
+        <div className="registros">
+          {ocorrencias.map((o) => (
+            <article className="registro" key={o.id}>
+              <div className="registro-topo">
+                <span className={`avatar-reg cor-${COR_TIPO[o.tipo] || 'neutro'}`} aria-hidden="true">{iniciais(o.funcionarios?.nome)}</span>
+                <div className="registro-nome">
+                  <b>{o.funcionarios?.nome}</b>
+                  <small>{dataBR(o.data)}</small>
+                </div>
+              </div>
+              <div className="chips">
+                <span className={`chip cor-${COR_TIPO[o.tipo] || 'neutro'}`}>{TIPOS_OCORRENCIA[o.tipo]}</span>
+              </div>
+              <dl className="registro-dados">
+                <div><dt>Duração</dt><dd>{o.minutos ? `${o.minutos} min` : `${o.dias} dia${o.dias > 1 ? 's' : ''}`}</dd></div>
+                {o.observacao && <div><dt>Observação</dt><dd>{o.observacao}</dd></div>}
+              </dl>
+              <div className="registro-rodape">
+                <Apagar tabela="ocorrencias" id={o.id} pergunta="Apagar este registro? Se já foi descontado, o desconto continua no salário." />
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

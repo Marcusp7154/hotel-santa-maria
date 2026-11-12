@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { brl, dataCurta, dataLonga, NOME_STATUS_QUARTO, NOME_STATUS_RESERVA, ordenarQuartos } from '@/lib/formato';
 import {
-  AtribuirQuarto, BotaoAuditoria, BotaoCheckin, BotaoCheckout, Caixa, LancarConsumo, Receber, ReceberHospedagem, StatusQuarto,
+  AtribuirQuarto, BotaoAuditoria, BotaoCheckin, BotaoCheckout, Caixa, LancarConsumo, ReceberNota, StatusQuarto,
 } from './acoes';
 
 export const dynamic = 'force-dynamic';
@@ -89,16 +89,16 @@ export default async function Hoje() {
           <div className="acoes">
             {hospPaga
               ? <span className="etiqueta limpo">Hospedagem paga</span>
-              : <>
-                  <span className="etiqueta sujo">Hospedagem a acertar</span>
-                  <ReceberHospedagem reservaId={r.id} pendente={Number(hosp.pendente)} total={Number(hosp.total)} temTurno={!!turno} compacto />
-                </>}
+              : <span className="etiqueta sujo">Hospedagem a acertar</span>}
           </div>
         )}
         {financeiro && conta && (
           <>
             <LancarConsumo contaId={conta.conta_id} produtos={produtos} temTurno={!!turno} />
-            {saldo > 0 && (hospPaga || !hosp || Number(hosp.total) === 0) && <Receber contaId={conta.conta_id} saldo={saldo} temTurno={!!turno} />}
+            {saldo > 0 && (
+              <ReceberNota contaId={conta.conta_id} reservaId={r.id} saldo={saldo}
+                           hospedagem={hospPaga ? 0 : Number(hosp?.pendente || 0)} temTurno={!!turno} />
+            )}
           </>
         )}
         {financeiro && (

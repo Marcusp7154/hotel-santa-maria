@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { brl, dataCurta, NOME_FORMA, noites } from '@/lib/formato';
-import { BotaoImprimir, LancarConsumo, Receber, ReceberHospedagem } from '../../acoes';
+import { BotaoImprimir, LancarConsumo, ReceberNota } from '../../acoes';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +64,6 @@ export default async function Notinha({ params }) {
   const totalConsumo = soma(consumo, 'valor_total');
   const totalPago = soma(pagamentos, 'valor');
   const saldo = hospTotal + totalConsumo - totalPago;
-  const saldoConsumo = totalConsumo - soma(pagOutros, 'valor');
   const aberta = conta.status === 'aberta';
   const pagoNaHora = new Set(pagamentos.filter((p) => p.lancamento_id).map((p) => p.lancamento_id));
   const noitesEstadia = resumo?.noites ?? diarias.filter((l) => l.tipo === 'diaria').length;
@@ -198,16 +197,14 @@ export default async function Notinha({ params }) {
         <section className="bloco nao-imprimir" style={{ marginTop: 16 }}>
           <header><h2>Vender e receber</h2></header>
           <div className="cartao">
-            {reserva?.status === 'hospedado' && hospFalta > 0 && (
-              <ReceberHospedagem reservaId={reserva.id} pendente={hospFalta} total={hospTotal} temTurno={!!turnoR.data} />
+            {saldo > 0.004 && (
+              <div className="receber-bloco">
+                <b>Receber pagamento</b>
+                <ReceberNota contaId={conta.id} reservaId={reserva?.status === 'hospedado' ? reserva.id : null}
+                             saldo={saldo} hospedagem={hospPaga ? 0 : hospFalta} temTurno={!!turnoR.data} />
+              </div>
             )}
             <LancarConsumo contaId={conta.id} produtos={produtosR.data || []} temTurno={!!turnoR.data} />
-            {saldoConsumo > 0 && (
-              <>
-                <small className="fraco">Receber consumo ({brl(saldoConsumo)}):</small>
-                <Receber contaId={conta.id} saldo={saldoConsumo} temTurno={!!turnoR.data} />
-              </>
-            )}
           </div>
         </section>
       )}

@@ -746,3 +746,16 @@ a.barra:hover { filter: brightness(0.95); text-decoration: none; }
 .tabela tr.previsto td { color: var(--texto-2); font-style: italic; }
 .receber-hospedagem { padding: 8px 0; }
 @media print { .tabela tr.secao-notinha td { background: none; border-bottom: 1px solid #000; } }
+
+/* Formulário livre dentro do mesmo quadro de cadastro (+ Novo …) */
+.registro-form-livre .form-linha { padding: 0; border: 0; background: none; box-shadow: none; }
+.registro-form-livre .form-linha.novo { background: none; box-shadow: none; }
+
+/* Receber pagamento da notinha (tudo, parte, só hospedagem, só consumo) */
+.receber-nota { display: grid; gap: 8px; justify-items: start; }
+.receber-nota input[type='number'] { width: 130px; }
+.receber-nota input[readonly] { background: var(--superficie-2); }
+.receber-bloco { display: grid; gap: 8px; padding-bottom: 12px; border-bottom: 1px dashed var(--borda); }
+.linha-ferias { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+details.periodos summary { cursor: pointer; font-size: 13px; font-weight: 650; color: var(--texto-2); }
+details.periodos .tabela { font-size: 13px; }

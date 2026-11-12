@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, temChaveAdmin } from '@/lib/supabase/admin';
-import { MembroEquipe, NovoMembro } from '../formularios';
+import { MembroEquipe, NovoCadastro, NovoMembro } from '../formularios';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,17 +32,14 @@ export default async function CadastroEquipe() {
       )}
 
       <section className="bloco">
-        <header><h2>Novo acesso ao sistema</h2></header>
+        <header><h2>Acessos ao sistema</h2><span className="contagem">{equipe.length}</span></header>
         <p className="nota">
           Crie o login com uma senha provisória e passe para a pessoa. Recepção vende, recebe e faz check-in e check-out;
           governança só vê quartos e reservas; gerente também cadastra quartos e produtos e vê o caixa de todos.
+          Quem não deve mais entrar: edite e desmarque "Pode entrar no sistema" (o histórico continua guardado).
+          Salário, escala e férias ficam no menu Funcionários.
         </p>
-        <NovoMembro />
-      </section>
-
-      <section className="bloco">
-        <header><h2>Quem tem acesso</h2><span className="contagem">{equipe.length}</span></header>
-        <p className="nota">Quem não deve mais entrar: desmarque "Pode entrar no sistema". O histórico do que a pessoa fez continua guardado. Salário, escala e férias ficam no menu Funcionários.</p>
+        <NovoCadastro rotulo="Novo acesso"><NovoMembro /></NovoCadastro>
         <div className="registros">
           {equipe.map((m) => <MembroEquipe key={m.id} membro={m} email={emails[m.id]} souEu={m.id === user.id} />)}
         </div>

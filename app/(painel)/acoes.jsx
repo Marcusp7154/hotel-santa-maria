@@ -205,6 +205,80 @@ export function ReceberHospedagem({ reservaId, pendente, total, temTurno, compac
   );
 }
 
+// Receber da notinha: tudo, só a hospedagem, só o consumo ou uma parte (qualquer valor).
+// O que não for pago continua na notinha como saldo para acertar depois.
+export function ReceberNota({ contaId, reservaId, saldo, hospedagem = 0, temTurno }) {
+  const { ocupado, erro, setErro, rodar } = useAcao();
+  const total = Math.max(Number(saldo) || 0, 0);
+  const hosp = reservaId ? Math.min(Math.max(Number(hospedagem) || 0, 0), total) : 0;
+  const consumo = Math.max(total - hosp, 0);
+  const [opcao, setOpcao] = useState('tudo');
+  const [forma, setForma] = useState('pix');
+  const [valor, setValor] = useState(total.toFixed(2));
+  const [feito, setFeito] = useState(null);
+
+  if (!(total > 0)) return null;
+  if (!temTurno) return <small className="fraco">Abra seu caixa para receber ({brl(total)} em aberto).</small>;
+
+  const opcoes = [
+    ['tudo', `Tudo ${brl(total)}`],
+    ...(hosp > 0 && consumo > 0 ? [['hosp', `Só hospedagem ${brl(hosp)}`], ['consumo', `Só consumo ${brl(consumo)}`]] : []),
+    ['parte', 'Uma parte'],
+  ];
+  const escolher = (o) => {
+    setOpcao(o);
+    setFeito(null);
+    setErro(null);
+    setValor(o === 'tudo' ? total.toFixed(2) : o === 'hosp' ? hosp.toFixed(2) : o === 'consumo' ? consumo.toFixed(2) : '');
+  };
+
+  async function receber(e) {
+    e.preventDefault();
+    setFeito(null);
+    const v = Math.round(Number(String(valor).replace(',', '.')) * 100) / 100;
+    if (!(v > 0)) { setErro('Informe o valor.'); return; }
+    if (v > total + 0.001) { setErro(`O valor passa do que está em aberto (${brl(total)}).`); return; }
+    // A parte da hospedagem é registrada como hospedagem, para a notinha mostrar "paga"
+    const parteHosp = opcao === 'tudo' ? hosp : opcao === 'hosp' ? v : 0;
+    const parteResto = Math.round((v - parteHosp) * 100) / 100;
+    if (parteHosp > 0) {
+      const r = await rodar((sb) => sb.rpc('fn_pagar_hospedagem', { p_reserva: reservaId, p_forma: forma, p_valor: parteHosp }));
+      if (!r.ok) return;
+    }
+    if (parteResto > 0) {
+      const r = await rodar((sb) => sb.from('pagamentos').insert({ conta_id: contaId, forma, valor: parteResto }));
+      if (!r.ok) return;
+    }
+    const falta = Math.round((total - v) * 100) / 100;
+    setFeito(falta > 0 ? `Recebido ${brl(v)}. Ficou ${brl(falta)} na notinha.` : `Recebido ${brl(v)}. Tudo pago.`);
+    setOpcao('tudo');
+    setValor(falta > 0 ? falta.toFixed(2) : '');
+  }
+
+  return (
+    <form className="receber-nota" onSubmit={receber}>
+      <div className="segmentos" role="radiogroup" aria-label="O que vai pagar">
+        {opcoes.map(([k, rot]) => (
+          <button key={k} type="button" role="radio" aria-checked={opcao === k} className={opcao === k ? 'ativo' : ''}
+                  onClick={() => escolher(k)} disabled={ocupado}>{rot}</button>
+        ))}
+      </div>
+      <div className="acoes">
+        <select value={forma} onChange={(e) => setForma(e.target.value)} disabled={ocupado} aria-label="Forma de pagamento">
+          {Object.entries(NOME_FORMA).map(([k, nome]) => <option key={k} value={k}>{nome}</option>)}
+        </select>
+        <input type="number" step="0.01" min="0.01" max={total.toFixed(2)} placeholder="Valor" aria-label="Valor"
+               value={valor} readOnly={opcao !== 'parte'} autoFocus={opcao === 'parte'}
+               onChange={(e) => setValor(e.target.value)} disabled={ocupado} />
+        <button type="submit" className="primario" disabled={ocupado}>{ocupado ? 'Recebendo…' : 'Receber'}</button>
+      </div>
+      {opcao === 'parte' && <small className="fraco">O que não for pago agora continua na notinha. Dá para receber várias vezes, em formas diferentes.</small>}
+      {feito && <span className="mensagem ok">{feito}</span>}
+      <Erro texto={erro} />
+    </form>
+  );
+}
+
 // Venda na recepção: fica na notinha para acertar na saída, ou já é paga na hora
 export function LancarConsumo({ contaId, produtos, temTurno }) {
   const { ocupado, erro, rodar } = useAcao();
