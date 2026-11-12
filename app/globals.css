@@ -460,6 +460,47 @@ details.recolhivel > summary .seta {
 details.recolhivel[open] > summary .seta { transform: rotate(-135deg) translate(-2px, -1px); }
 .semana-grade { display: grid; grid-template-columns: 90px 120px 120px; gap: 6px 10px; align-items: center; }
 
+/* ---------------------------------------------------------------------
+   Relatórios
+   --------------------------------------------------------------------- */
+:root { --sobre-ok: #ffffff; }
+@media (prefers-color-scheme: dark) { :root { --sobre-ok: #0b1f12; } }
+.indicadores .indicador.positivo:first-child { background: var(--ok); border-color: var(--ok); color: var(--sobre-ok); }
+.indicadores .indicador.positivo:first-child .rotulo { color: var(--sobre-ok); }
+.filtro-periodo { display: flex; gap: 12px 20px; flex-wrap: wrap; align-items: end; justify-content: space-between; padding: 14px 16px; }
+.relatorio-colunas { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+.barras-relatorio td { vertical-align: middle; border-bottom-color: var(--superficie-2); }
+.barras-relatorio tbody tr:hover td { background: transparent; }
+.barras-relatorio .nome-linha { width: 42%; font-weight: 600; }
+.barras-relatorio .celula-barra { width: 40%; padding-left: 0; padding-right: 0; }
+.barra-rel { height: 12px; border-radius: 6px; }
+.barra-rel.cor-marca { background: var(--marca); }
+.barra-rel.cor-verde { background: var(--ok); }
+.barra-rel.cor-azul { background: var(--c-azul); }
+.barra-rel.cor-roxo { background: var(--c-roxo); }
+.barra-rel.cor-neutro { background: var(--borda-forte); }
+.detalhe-folha { border-top: 1px solid var(--borda); }
+.detalhe-folha > summary { font-weight: 650; font-size: 14px; color: var(--texto-2); }
+.busca-gasto { padding: 14px 16px 4px; }
+.busca-gasto input[name='q'] { flex: 1; min-width: 200px; padding: 10px 12px; font-size: 15px; }
+.grafico-area { padding: 12px 16px 0; overflow-x: auto; }
+.grafico-mensal { display: block; width: 100%; min-width: 460px; height: auto; max-height: 300px; }
+.grafico-mensal .eixo { stroke: var(--borda-forte); stroke-width: 1; }
+.grafico-mensal .barra-entrou { fill: var(--ok); }
+.grafico-mensal .barra-saiu { fill: var(--marca); }
+.grafico-mensal .rotulo-mes { fill: var(--texto-2); font-size: 13px; font-weight: 600; font-family: var(--fonte); }
+.grafico-mensal .rotulo-mes.atual { fill: var(--texto); font-weight: 800; }
+.grafico-mensal .saldo-mes { fill: var(--ok); font-size: 12px; font-weight: 700; font-family: var(--fonte); }
+.grafico-mensal .saldo-mes.negativo { fill: var(--erro); }
+.ponto-legenda { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.ponto-legenda.entrou { background: var(--ok); }
+.ponto-legenda.saiu { background: var(--marca); }
+@media print {
+  .grafico-mensal .barra-entrou { fill: #15803d; }
+  .grafico-mensal .barra-saiu { fill: #c8102e; }
+  .indicadores .indicador:first-child { border: 1px solid #999; background: none !important; color: #000 !important; }
+}
+
 /* Despesas */
 .barra-cat { height: 10px; border-radius: 5px; background: var(--marca); }
 .tabela tr.linha-ativa td { background: var(--marca-suave); }
