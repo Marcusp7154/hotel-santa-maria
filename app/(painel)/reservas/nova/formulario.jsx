@@ -74,6 +74,7 @@ export function NovaReserva({ hoje, temTurno, inicial }) {
   const [status, setStatus] = useState('confirmada');
   const [livres, setLivres] = useState([]);
   const [carregando, setCarregando] = useState(false);
+  const [erroQuartos, setErroQuartos] = useState(null);
   const [escolhidos, setEscolhidos] = useState(inicial.quarto ? { [inicial.quarto]: '' } : {});
   const [sinal, setSinal] = useState('');
   const [formaSinal, setFormaSinal] = useState('pix');
@@ -94,11 +95,18 @@ export function NovaReserva({ hoje, temTurno, inicial }) {
     if (!datasOk) { setLivres([]); return; }
     let cancelado = false;
     setCarregando(true);
+    setErroQuartos(null);
     createClient().rpc('fn_quartos_livres', { p_inicio: entrada, p_fim: saida, p_hospedes: pessoas })
       .then(({ data, error }) => {
         if (cancelado) return;
         setCarregando(false);
-        if (error) { setErro(traduzirErro(error.message)); return; }
+        if (error) {
+          setLivres([]);
+          setErroQuartos(/fn_quartos_livres|schema cache|PGRST202/i.test(error.message)
+            ? 'O banco ainda não tem a parte de reservas. Rode o script hotel_fase1h.sql no Supabase e recarregue a página.'
+            : traduzirErro(error.message));
+          return;
+        }
         const lista = data || [];
         setLivres(lista);
         // tira da seleção o que deixou de estar livre
@@ -255,7 +263,8 @@ export function NovaReserva({ hoje, temTurno, inicial }) {
         </header>
         <div className="etapa-corpo">
           {!datasOk && <div className="vazio">Escolha as datas para ver os quartos livres.</div>}
-          {datasOk && !carregando && livres.length === 0 && <div className="vazio">Nenhum quarto livre em todas essas noites.</div>}
+          {erroQuartos && <div className="mensagem erro">{erroQuartos}</div>}
+          {datasOk && !carregando && !erroQuartos && livres.length === 0 && <div className="vazio">Nenhum quarto livre em todas essas noites.</div>}
           {porTipo.map(([tipo, quartos]) => (
             <div key={tipo} className="tipo-grupo">
               <div className="tipo-nome">{tipo} <small className="fraco">até {quartos[0].capacidade} pessoa(s) · {brl(quartos[0].diaria_media)}/noite pela tabela</small></div>
