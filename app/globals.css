@@ -737,3 +737,12 @@ a.cartao.linha-link:hover { background: var(--superficie-2); }
 .linha-mapa a.dia.livre:hover { background: var(--marca-suave); box-shadow: inset 0 0 0 1.5px var(--marca); border-radius: 6px; }
 a.barra { text-decoration: none; }
 a.barra:hover { filter: brightness(0.95); text-decoration: none; }
+
+/* Notinha: hospedagem separada do consumo */
+.tabela tr.secao-notinha td {
+  background: var(--superficie-2); font-weight: 700; font-size: 13px; padding-top: 7px; padding-bottom: 7px;
+}
+.tabela tr.secao-notinha .etiqueta { margin-left: 8px; }
+.tabela tr.previsto td { color: var(--texto-2); font-style: italic; }
+.receber-hospedagem { padding: 8px 0; }
+@media print { .tabela tr.secao-notinha td { background: none; border-bottom: 1px solid #000; } }

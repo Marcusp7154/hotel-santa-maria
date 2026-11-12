@@ -164,6 +164,47 @@ export function Receber({ contaId, saldo, temTurno }) {
   );
 }
 
+// Hospedagem paga adiantado: lança todas as diárias e quita de uma vez.
+// Quem não paga agora acerta na saída, com as diárias aparecendo na notinha.
+export function ReceberHospedagem({ reservaId, pendente, total, temTurno, compacto }) {
+  const { ocupado, erro, setErro, rodar } = useAcao();
+  const [aberto, setAberto] = useState(false);
+  const [forma, setForma] = useState('pix');
+  const [valor, setValor] = useState(Number(pendente).toFixed(2));
+
+  if (!(pendente > 0)) return null;
+  if (!aberto) {
+    return (
+      <span className="acoes">
+        <button type="button" className={compacto ? '' : 'primario'} onClick={() => setAberto(true)} disabled={!temTurno}
+                title={temTurno ? undefined : 'Abra seu caixa para receber'}>
+          Receber hospedagem {brl(pendente)}
+        </button>
+        {!temTurno && <small className="fraco">abra seu caixa para receber</small>}
+      </span>
+    );
+  }
+  return (
+    <form className="acoes receber-hospedagem" onSubmit={async (e) => {
+      e.preventDefault();
+      const v = Number(String(valor).replace(',', '.'));
+      if (!(v > 0)) { setErro('Informe o valor.'); return; }
+      const r = await rodar((sb) => sb.rpc('fn_pagar_hospedagem', { p_reserva: reservaId, p_forma: forma, p_valor: v }));
+      if (r.ok) setAberto(false);
+    }}>
+      <span className="fraco">Hospedagem{total && Number(total) !== Number(pendente) ? ` (falta ${brl(pendente)} de ${brl(total)})` : ''}:</span>
+      <select value={forma} onChange={(e) => setForma(e.target.value)} disabled={ocupado}>
+        {Object.entries(NOME_FORMA).map(([k, nome]) => <option key={k} value={k}>{nome}</option>)}
+      </select>
+      <input type="number" step="0.01" min="0.01" max={Number(pendente).toFixed(2)} value={valor}
+             onChange={(e) => setValor(e.target.value)} disabled={ocupado} />
+      <button type="submit" className="primario" disabled={ocupado}>{ocupado ? 'Recebendo…' : 'Receber'}</button>
+      <button type="button" className="fantasma" onClick={() => setAberto(false)} disabled={ocupado}>Voltar</button>
+      <Erro texto={erro} />
+    </form>
+  );
+}
+
 // Venda na recepção: fica na notinha para acertar na saída, ou já é paga na hora
 export function LancarConsumo({ contaId, produtos, temTurno }) {
   const { ocupado, erro, rodar } = useAcao();

@@ -80,6 +80,7 @@ export function NovaReserva({ hoje, temTurno, inicial }) {
   const [formaSinal, setFormaSinal] = useState('pix');
   const [obs, setObs] = useState('');
   const [checkinAgora, setCheckinAgora] = useState(false);
+  const [pagarAgora, setPagarAgora] = useState(false);
   const [erro, setErro] = useState(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -162,7 +163,8 @@ export function NovaReserva({ hoje, temTurno, inicial }) {
           quarto_id: q.quarto_id,
           valor_diaria: escolhidos[q.quarto_id] === '' ? null : numero(escolhidos[q.quarto_id]),
         })),
-        sinal: valSinal > 0 ? { valor: valSinal, forma: formaSinal } : null,
+        sinal: !checkinAgora && valSinal > 0 ? { valor: valSinal, forma: formaSinal } : null,
+        pagar_hospedagem: checkinAgora && pagarAgora && temTurno ? { forma: formaSinal } : null,
         checkin_agora: checkinAgora,
       },
     });
@@ -304,37 +306,61 @@ export function NovaReserva({ hoje, temTurno, inicial }) {
       <section className="bloco etapa">
         <header><h2><span className="etapa-n">4</span>Valores e confirmação</h2></header>
         <div className="etapa-corpo">
-          <div className="fechamento">
-            <div className="total-reserva">
-              <small>Total previsto</small>
-              <b>{brl(totalPrevisto)}</b>
-              <small className="fraco">
-                {selecionados.length ? `${selecionados.length} quarto(s) · ${noites(qtdNoites)}` : 'escolha os quartos'}
-              </small>
-            </div>
-            <div className="grade-campos">
-              <div className="campo"><label htmlFor="r-sinal">{checkinAgora ? 'Pagamento agora (R$)' : 'Sinal recebido (R$)'}</label>
-                <input id="r-sinal" inputMode="decimal" placeholder="0,00" value={sinal} disabled={!temTurno}
-                       onChange={(e) => setSinal(e.target.value)} style={{ width: 130 }} /></div>
-              <div className="campo"><label htmlFor="r-forma">Forma</label>
-                <select id="r-forma" value={formaSinal} disabled={!temTurno} onChange={(e) => setFormaSinal(e.target.value)}>
-                  {Object.entries(NOME_FORMA).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
-                </select></div>
-            </div>
-            {!temTurno && <p className="nota">Para registrar sinal ou pagamento, abra seu caixa. A reserva pode ser salva sem isso.</p>}
-          </div>
-          <div className="campo"><label htmlFor="r-obs">Observações</label>
-            <textarea id="r-obs" rows={2} placeholder="Ex.: chega depois das 22h, cama de casal, aniversário…" value={obs} onChange={(e) => setObs(e.target.value)} /></div>
           {entraHoje && (
             <label className="marcar">
               <input type="checkbox" checked={checkinAgora} onChange={(e) => setCheckinAgora(e.target.checked)} />
               <span><b>O hóspede já está aqui: fazer o check-in agora</b><small className="fraco">O quarto precisa estar limpo.</small></span>
             </label>
           )}
+          <div className="fechamento">
+            <div className="total-reserva">
+              <small>Hospedagem prevista</small>
+              <b>{brl(totalPrevisto)}</b>
+              <small className="fraco">
+                {selecionados.length ? `${selecionados.length} quarto(s) · ${noites(qtdNoites)}` : 'escolha os quartos'}
+              </small>
+            </div>
+            {checkinAgora ? (
+              <div className="grade-campos">
+                <div className="campo"><span className="rotulo-campo">A hospedagem</span>
+                  <div className="segmentos">
+                    <button type="button" className={pagarAgora ? 'ativo' : ''} disabled={!temTurno} onClick={() => setPagarAgora(true)}>Paga agora</button>
+                    <button type="button" className={!pagarAgora ? 'ativo' : ''} onClick={() => setPagarAgora(false)}>Acertar na saída</button>
+                  </div></div>
+                {pagarAgora && (
+                  <div className="campo"><label htmlFor="r-forma">Forma</label>
+                    <select id="r-forma" value={formaSinal} onChange={(e) => setFormaSinal(e.target.value)}>
+                      {Object.entries(NOME_FORMA).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+                    </select></div>
+                )}
+              </div>
+            ) : (
+              <div className="grade-campos">
+                <div className="campo"><label htmlFor="r-sinal">Sinal recebido (R$)</label>
+                  <input id="r-sinal" inputMode="decimal" placeholder="0,00" value={sinal} disabled={!temTurno}
+                         onChange={(e) => setSinal(e.target.value)} style={{ width: 130 }} /></div>
+                <div className="campo"><label htmlFor="r-forma">Forma</label>
+                  <select id="r-forma" value={formaSinal} disabled={!temTurno} onChange={(e) => setFormaSinal(e.target.value)}>
+                    {Object.entries(NOME_FORMA).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+                  </select></div>
+              </div>
+            )}
+            <p className="nota">
+              {!temTurno
+                ? 'Para receber agora (sinal ou hospedagem), abra seu caixa. A reserva pode ser salva sem isso, para acertar depois.'
+                : checkinAgora
+                  ? (pagarAgora
+                    ? `Recebe ${brl(totalPrevisto)} agora. A hospedagem fica quitada e a notinha mostra só o consumo a acertar.`
+                    : 'As diárias entram na notinha, para acertar na saída junto com o consumo.')
+                  : 'O sinal abate da hospedagem. O que faltar é recebido no check-in ou fica para a saída.'}
+            </p>
+          </div>
+          <div className="campo"><label htmlFor="r-obs">Observações</label>
+            <textarea id="r-obs" rows={2} placeholder="Ex.: chega depois das 22h, cama de casal, aniversário…" value={obs} onChange={(e) => setObs(e.target.value)} /></div>
           <Erro texto={erro} />
           <div className="acoes">
             <button type="submit" className="primario grande" disabled={salvando}>
-              {salvando ? 'Salvando…' : checkinAgora ? 'Salvar e fazer check-in' : 'Salvar reserva'}
+              {salvando ? 'Salvando…' : checkinAgora ? (pagarAgora && temTurno ? `Fazer check-in e receber ${brl(totalPrevisto)}` : 'Salvar e fazer check-in') : 'Salvar reserva'}
             </button>
           </div>
         </div>

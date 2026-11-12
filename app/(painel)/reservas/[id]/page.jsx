@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AtribuirQuarto, BotaoCheckin } from '@/app/(painel)/acoes';
+import { AtribuirQuarto, BotaoCheckin, ReceberHospedagem } from '@/app/(painel)/acoes';
 import {
   brl, dataCurta, dataLonga, diasEntre, NOME_ORIGEM, NOME_STATUS_QUARTO, NOME_STATUS_RESERVA, noites, ordenarQuartos,
 } from '@/lib/formato';
@@ -14,7 +14,7 @@ const NOME_DOC = { cpf: 'CPF', rg: 'RG', passaporte: 'Passaporte', cnh: 'CNH', o
 export default async function PaginaReserva({ params, searchParams }) {
   const { id } = await params;
   const sp = await searchParams;
-  const { supabase, perfil } = await contexto();
+  const { supabase, user, perfil } = await contexto();
   if (!['admin', 'gerente', 'recepcao'].includes(perfil)) {
     return <SemAcesso texto="Reservas são da recepção, gerência e administração." />;
   }
@@ -26,13 +26,18 @@ export default async function PaginaReserva({ params, searchParams }) {
     .eq('id', id).maybeSingle();
   if (!r) notFound();
 
-  const [{ data: hoje }, contasR, quartosR, outrasR] = await Promise.all([
+  const [{ data: hoje }, contasR, quartosR, outrasR, hospR, turnoR] = await Promise.all([
     supabase.rpc('fn_hoje'),
     supabase.from('v_contas_saldo').select('conta_id, status, saldo').eq('reserva_id', id),
     supabase.from('quartos').select('id, numero, tipo_quarto_id, status').eq('ativo', true),
     supabase.from('reservas').select('id, codigo, data_checkin, data_checkout, status')
       .eq('hospede_id', r.hospede_id).neq('id', id).order('data_checkin', { ascending: false }).limit(6),
+    supabase.rpc('fn_hospedagem_resumo', { p_reserva: id }),
+    supabase.from('turnos_caixa').select('id').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle(),
   ]);
+  const hosp = hospR.data?.[0];
+  const hospTotal = Number(hosp?.total || 0);
+  const hospFalta = Number(hosp?.pendente || 0);
   const h = r.hospedes;
   const contas = contasR.data || [];
   const conta = contas.find((c) => c.status === 'aberta') || contas[0];
@@ -138,18 +143,34 @@ export default async function PaginaReserva({ params, searchParams }) {
 
         <section className="bloco">
           <header><h2>Conta</h2>{conta && <Link href={`/conta/${conta.conta_id}`}>Abrir notinha</Link>}</header>
-          {conta ? (
-            <div className="cartao">
-              <div className="linha"><span>Já pago</span><b>{brl(pago)}</b></div>
-              <div className="linha"><span>Saldo da conta agora</span>
-                <b className={Number(conta.saldo) > 0 ? 'texto-erro' : ''}>{brl(conta.saldo)}</b></div>
-              {pendente && <p className="nota">As diárias entram na conta a partir do check-in. Saldo negativo é crédito do hóspede (sinal).</p>}
-            </div>
-          ) : (
-            <div className="vazio">
-              {pendente ? 'Nenhum sinal pago. A conta é aberta no check-in.' : 'Sem conta.'}
-            </div>
-          )}
+          <div className="cartao">
+            {hospTotal > 0 && (
+              <div className="linha">
+                <span>Hospedagem {noites(n)}</span>
+                <b>{brl(hospTotal)}</b>
+              </div>
+            )}
+            {hospTotal > 0 && (
+              <div className="linha">
+                <span>{hospFalta <= 0 ? 'Situação' : 'Falta da hospedagem'}</span>
+                {hospFalta <= 0
+                  ? <span className="etiqueta limpo">Hospedagem paga</span>
+                  : <b className="texto-erro">{brl(hospFalta)}{Number(hosp.pago) > 0 ? ` (já pagou ${brl(hosp.pago)})` : ''}</b>}
+              </div>
+            )}
+            {conta && <div className="linha"><span>Total já pago</span><b>{brl(pago)}</b></div>}
+            {hospedado && hospFalta > 0 && (
+              <ReceberHospedagem reservaId={r.id} pendente={hospFalta} total={hospTotal} temTurno={Boolean(turnoR.data)} />
+            )}
+            {pendente && (
+              <p className="nota">
+                {hospFalta > 0
+                  ? 'No check-in, receba a hospedagem se o hóspede pagar na entrada. Se não, as diárias entram na notinha para acertar na saída.'
+                  : 'Hospedagem já paga pelo sinal.'}
+              </p>
+            )}
+            {hospedado && hospFalta > 0 && <p className="nota">Se não pagar agora, as diárias ficam na notinha para acertar na saída.</p>}
+          </div>
         </section>
       </div>
     </>

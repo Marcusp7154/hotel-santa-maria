@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { brl, dataCurta, dataLonga, NOME_STATUS_QUARTO, NOME_STATUS_RESERVA, ordenarQuartos } from '@/lib/formato';
 import {
-  AtribuirQuarto, BotaoAuditoria, BotaoCheckin, BotaoCheckout, Caixa, LancarConsumo, Receber, StatusQuarto,
+  AtribuirQuarto, BotaoAuditoria, BotaoCheckin, BotaoCheckout, Caixa, LancarConsumo, Receber, ReceberHospedagem, StatusQuarto,
 } from './acoes';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,7 @@ export default async function Hoje() {
   ]);
   const financeiro = ['admin', 'gerente', 'recepcao'].includes(perfil?.perfil);
 
-  const [chegadasR, hospedadosR, quartosR, relatorioR, saldosR, produtosR, turnoR, abertoR] = await Promise.all([
+  const [chegadasR, hospedadosR, quartosR, relatorioR, saldosR, produtosR, turnoR, abertoR, hospR] = await Promise.all([
     supabase.from('reservas').select(CAMPOS_RESERVA)
       .in('status', ['pre_reserva', 'confirmada']).lte('data_checkin', hoje).order('data_checkin'),
     supabase.from('reservas').select(CAMPOS_RESERVA)
@@ -43,7 +43,9 @@ export default async function Hoje() {
     financeiro ? supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome') : { data: [] },
     financeiro ? supabase.from('turnos_caixa').select('id, aberto_em').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle() : { data: null },
     financeiro ? supabase.rpc('fn_caixa_aberto') : { data: [] },
+    financeiro ? supabase.rpc('fn_hospedagem_resumo') : { data: [] },
   ]);
+  const hospedagemDe = (reservaId) => (hospR.data || []).find((h) => h.reserva_id === reservaId);
 
   const chegadas = chegadasR.data || [];
   const hospedados = hospedadosR.data || [];
@@ -67,7 +69,10 @@ export default async function Hoje() {
 
   function CartaoHospedado({ r, saindo }) {
     const conta = contaDe(r.id);
-    const saldo = Number(conta?.saldo || 0);
+    const hosp = hospedagemDe(r.id);
+    // o que falta pagar: conta lançada + diárias que ainda vão entrar
+    const saldo = Number(conta?.saldo || 0) + Number(hosp?.a_lancar || 0);
+    const hospPaga = hosp && Number(hosp.total) > 0 && Number(hosp.pendente) <= 0;
     return (
       <div className="cartao">
         <div className="linha">
@@ -80,10 +85,20 @@ export default async function Hoje() {
           {r.codigo} · quarto {quartosDaReserva(r).map((rq) => rq.quartos?.numero).filter(Boolean).join(', ')} ·
           saída {dataCurta(r.data_checkout)} · {hospedesTexto(r)}
         </div>
+        {financeiro && hosp && Number(hosp.total) > 0 && (
+          <div className="acoes">
+            {hospPaga
+              ? <span className="etiqueta limpo">Hospedagem paga</span>
+              : <>
+                  <span className="etiqueta sujo">Hospedagem a acertar</span>
+                  <ReceberHospedagem reservaId={r.id} pendente={Number(hosp.pendente)} total={Number(hosp.total)} temTurno={!!turno} compacto />
+                </>}
+          </div>
+        )}
         {financeiro && conta && (
           <>
             <LancarConsumo contaId={conta.conta_id} produtos={produtos} temTurno={!!turno} />
-            {saldo > 0 && <Receber contaId={conta.conta_id} saldo={saldo} temTurno={!!turno} />}
+            {saldo > 0 && (hospPaga || !hosp || Number(hosp.total) === 0) && <Receber contaId={conta.conta_id} saldo={saldo} temTurno={!!turno} />}
           </>
         )}
         {financeiro && (
