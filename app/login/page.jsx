@@ -26,11 +26,16 @@ export default function Login() {
   }
 
   return (
-    <main className="login">
-      <form onSubmit={entrar}>
+    <main className="login-tela">
+      <section className="login-marca" aria-hidden="true">
+        <span className="monograma grande">SM</span>
+        <p className="login-nome">Hotel<br />Santa Maria</p>
+        <p className="login-legenda">Recepção, caixa e equipe num só lugar.</p>
+      </section>
+      <form onSubmit={entrar} className="login-cartao">
         <div>
-          <h1>Hotel Santa Maria</h1>
-          <p className="fraco" style={{ margin: '4px 0 0' }}>Acesso da equipe</p>
+          <h1>Entrar</h1>
+          <p className="fraco" style={{ margin: '4px 0 0' }}>Use o e-mail e a senha que o administrador criou para você.</p>
         </div>
         <div className="campo">
           <label htmlFor="email">E-mail</label>
