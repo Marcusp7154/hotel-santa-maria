@@ -285,7 +285,7 @@ export function Caixa({ turno, resumo }) {
         ) : null,
       )}
       {item('sangria') > 0 && <div className="linha"><span>Sangrias</span><b>− {brl(item('sangria'))}</b></div>}
-      {item('suprimento') > 0 && <div className="linha"><span>Suprimentos</span><b>{brl(item('suprimento'))}</b></div>}
+      {item('suprimento') > 0 && <div className="linha"><span>Reforço de troco</span><b>{brl(item('suprimento'))}</b></div>}
       {item('despesa') > 0 && <div className="linha"><span>Despesas pagas em dinheiro</span><b>− {brl(item('despesa'))}</b></div>}
       <div className="linha"><span>Dinheiro esperado na gaveta</span><b>{brl(esperado)}</b></div>
       <MovimentoCaixa />
@@ -308,26 +308,38 @@ export function Caixa({ turno, resumo }) {
   );
 }
 
+// Reforço de troco: dinheiro que entra na gaveta sem ser pagamento de hóspede
 function MovimentoCaixa() {
   const { ocupado, erro, rodar } = useAcao();
-  const [tipo, setTipo] = useState('sangria');
+  const [aberto, setAberto] = useState(false);
   const [valor, setValor] = useState('');
   const [motivo, setMotivo] = useState('');
+  const [feito, setFeito] = useState(null);
+
+  if (!aberto) {
+    return (
+      <div className="acoes">
+        <button type="button" onClick={() => { setAberto(true); setFeito(null); }}>Reforço de troco</button>
+        {feito && <span className="mensagem ok">{feito}</span>}
+      </div>
+    );
+  }
   return (
     <form className="acoes" onSubmit={async (e) => {
       e.preventDefault();
       const v = Number(String(valor).replace(',', '.'));
-      if (!(v > 0) || !motivo.trim()) return;
-      const r = await rodar((sb) => sb.from('movimentos_caixa').insert({ tipo, valor: v, motivo: motivo.trim() }));
-      if (r.ok) { setValor(''); setMotivo(''); }
+      if (!(v > 0)) return;
+      const r = await rodar((sb) => sb.from('movimentos_caixa').insert({
+        tipo: 'suprimento', valor: v, motivo: motivo.trim() || 'Reforço de troco',
+      }));
+      if (r.ok) { setFeito(`Reforço de ${brl(v)} registrado.`); setValor(''); setMotivo(''); setAberto(false); }
     }}>
-      <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-        <option value="sangria">Sangria</option>
-        <option value="suprimento">Suprimento</option>
-      </select>
-      <input type="number" step="0.01" min="0.01" placeholder="Valor" value={valor} onChange={(e) => setValor(e.target.value)} />
-      <input placeholder="Motivo" value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ flex: 1, minWidth: 120 }} />
-      <button type="submit" disabled={ocupado}>Registrar</button>
+      <input type="number" step="0.01" min="0.01" placeholder="Valor" aria-label="Valor do reforço" value={valor}
+             onChange={(e) => setValor(e.target.value)} autoFocus />
+      <input placeholder="Quem trouxe (opcional)" aria-label="Quem trouxe" value={motivo}
+             onChange={(e) => setMotivo(e.target.value)} style={{ flex: 1, minWidth: 140 }} />
+      <button type="submit" disabled={ocupado}>Registrar reforço</button>
+      <button type="button" onClick={() => setAberto(false)} disabled={ocupado}>Cancelar</button>
       <Erro texto={erro} />
     </form>
   );

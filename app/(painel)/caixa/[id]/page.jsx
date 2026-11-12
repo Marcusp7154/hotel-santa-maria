@@ -50,7 +50,7 @@ export default async function RelatorioTurno({ params }) {
             <div className="linha" key={f}><span>Recebido em {NOME_FORMA[f].toLowerCase()}</span><b>{brl(r.porForma[f])}</b></div>
           ))}
           <div className="linha"><span>Total recebido</span><b>{brl(r.recebido)}</b></div>
-          {r.suprimento > 0 && <div className="linha"><span>Suprimentos</span><b>{brl(r.suprimento)}</b></div>}
+          {r.suprimento > 0 && <div className="linha"><span>Reforço de troco</span><b>{brl(r.suprimento)}</b></div>}
           {r.sangria > 0 && <div className="linha"><span>Sangrias</span><b>− {brl(r.sangria)}</b></div>}
           {r.despesaDinheiro > 0 && <div className="linha"><span>Despesas pagas em dinheiro</span><b>− {brl(r.despesaDinheiro)}</b></div>}
           {r.despesaOutras > 0 && <div className="linha fraco"><span>Despesas no Pix ou cartão (não mexem na gaveta)</span><span>{brl(r.despesaOutras)}</span></div>}
@@ -78,7 +78,7 @@ export default async function RelatorioTurno({ params }) {
               })),
               ...movs.map((m) => ({
                 k: m.id, em: m.criado_em, forma: 'Dinheiro', valor: m.tipo === 'sangria' ? -Number(m.valor) : Number(m.valor),
-                desc: `${m.tipo === 'sangria' ? 'Sangria' : 'Suprimento'} · ${m.motivo}`,
+                desc: `${m.tipo === 'sangria' ? 'Sangria' : 'Reforço de troco'} · ${m.motivo}`,
               })),
               ...desps.map((d) => ({
                 k: d.id, em: d.criado_em, forma: NOME_FORMA[d.forma],

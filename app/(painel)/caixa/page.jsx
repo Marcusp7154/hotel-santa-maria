@@ -117,7 +117,7 @@ export default async function PaginaCaixa({ searchParams }) {
             {meusMovs.map((m) => (
               <div className="cartao" key={m.id}>
                 <div className="linha">
-                  <span><b>{m.tipo === 'sangria' ? 'Sangria' : 'Suprimento'}</b><small className="fraco"> · {m.motivo} · {horaDe(m.criado_em)}</small></span>
+                  <span><b>{m.tipo === 'sangria' ? 'Sangria' : 'Reforço de troco'}</b><small className="fraco"> · {m.motivo} · {horaDe(m.criado_em)}</small></span>
                   <span className="saldo">{m.tipo === 'sangria' ? '− ' : ''}{brl(m.valor)}</span>
                 </div>
               </div>
