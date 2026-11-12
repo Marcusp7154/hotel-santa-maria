@@ -53,11 +53,14 @@ export default async function Escala({ searchParams }) {
       )}
 
       {gestor && funcionarios.length > 0 && (
-        <section className="bloco">
-          <header>
+        <details className="bloco recolhivel" open={semPadrao.length > 0}>
+          <summary>
             <h2>Escala padrão de cada funcionário</h2>
-            {semPadrao.length > 0 && <span className="etiqueta pre_reserva">{semPadrao.length} sem escala</span>}
-          </header>
+            {semPadrao.length > 0
+              ? <span className="etiqueta pre_reserva">{semPadrao.length} sem escala</span>
+              : <span className="fraco" style={{ fontSize: 13 }}>{funcionarios.length} com escala definida</span>}
+            <span className="seta" aria-hidden="true" />
+          </summary>
           <p className="nota">
             Defina uma vez e a grade se monta sozinha todo mês. Para a noite 12x36, informe um dia em que a pessoa
             trabalha; o sistema alterna a partir dele. Trocas de fim de semana entre a manhã e a tarde: clique no dia
@@ -69,7 +72,7 @@ export default async function Escala({ searchParams }) {
               {g.funcionarios.map((f) => <PadraoEscala key={f.id} funcionario={f} padrao={padraoDe[f.id]} hoje={hoje} />)}
             </div>
           ))}
-        </section>
+        </details>
       )}
     </div>
   );

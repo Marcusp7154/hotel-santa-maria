@@ -206,6 +206,37 @@ function semanaDoPadrao(padrao) {
   });
 }
 
+// "13:00" -> "13h", "07:30" -> "7h30"
+function horaResumo(t) {
+  const [h, m] = String(t).split(':');
+  return `${Number(h)}h${m && m !== '00' ? m : ''}`;
+}
+
+const ABREV = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+// Resumo da escala padrão, ex.: "12x36 · 19h às 7h" ou "Seg a Sex 13h–19h · Dom 7h–19h"
+function resumoEscala(tipo, entrada, saida, semana) {
+  if (tipo === '12x36') return `12x36 · ${horaResumo(entrada)} às ${horaResumo(saida)}`;
+  if (tipo !== 'semanal') return '';
+  const ordem = [1, 2, 3, 4, 5, 6, 0];
+  const grupos = [];
+  for (const d of ordem) {
+    const { entrada: e, saida: s } = semana[d];
+    if (!e || !s) continue;
+    const ultimo = grupos[grupos.length - 1];
+    const anterior = ordem[ordem.indexOf(d) - 1];
+    if (ultimo && ultimo.e === e && ultimo.s === s && ultimo.fim === anterior) ultimo.fim = d;
+    else grupos.push({ ini: d, fim: d, e, s });
+  }
+  if (!grupos.length) return '';
+  return grupos.map((g) => {
+    const dias = g.ini === g.fim ? ABREV[g.ini]
+      : ordem.indexOf(g.fim) - ordem.indexOf(g.ini) === 1 ? `${ABREV[g.ini]} e ${ABREV[g.fim]}`
+      : `${ABREV[g.ini]} a ${ABREV[g.fim]}`;
+    return `${dias} ${horaResumo(g.e)}–${horaResumo(g.s)}`;
+  }).join(' · ');
+}
+
 export function PadraoEscala({ funcionario, padrao, hoje }) {
   const { ocupado, erro, setErro, rodar } = useAcao();
   const [tipo, setTipo] = useState(padrao?.tipo || '');
@@ -214,6 +245,7 @@ export function PadraoEscala({ funcionario, padrao, hoje }) {
   const [saida, setSaida] = useState(hora(padrao?.saida) || '07:00');
   const [semana, setSemana] = useState(() => semanaDoPadrao(padrao));
   const [salvo, setSalvo] = useState(false);
+  const [aberto, setAberto] = useState(false);
 
   function aplicar(chave) {
     const m = MODELOS[chave];
@@ -251,14 +283,37 @@ export function PadraoEscala({ funcionario, padrao, hoje }) {
         { onConflict: 'funcionario_id' },
       ));
     }
-    if (r.ok) setSalvo(true);
+    if (r.ok) { setSalvo(true); setAberto(false); }
+  }
+
+  const resumo = resumoEscala(tipo, entrada, saida, semana);
+
+  if (!aberto) {
+    return (
+      <div className="padrao-resumo">
+        <div className="registro-nome">
+          <b>{funcionario.nome}</b>
+          {funcionario.cargo && <small>{funcionario.cargo}</small>}
+        </div>
+        <span className={`chip ${resumo ? (tipo === '12x36' ? 'cor-roxo' : 'cor-azul') : 'cor-ambar'}`}>
+          {resumo || 'Sem escala definida'}
+        </span>
+        {salvo && <span className="mensagem ok">Escala salva</span>}
+        <button type="button" onClick={() => { setAberto(true); setSalvo(false); }}>
+          {resumo ? 'Editar escala' : 'Definir escala'}
+        </button>
+      </div>
+    );
   }
 
   return (
-    <form className="padrao-escala" onSubmit={salvar}>
+    <form className="padrao-escala aberta" onSubmit={salvar}>
       <div className="linha-editor">
         <b>{funcionario.nome}</b>
         {funcionario.cargo && <span className="fraco">{funcionario.cargo}</span>}
+        <button type="button" className="fantasma" style={{ marginLeft: 'auto' }} onClick={() => setAberto(false)} disabled={ocupado}>
+          Fechar
+        </button>
       </div>
       <div className="acoes">
         <span className="fraco">Modelos:</span>
@@ -301,7 +356,6 @@ export function PadraoEscala({ funcionario, padrao, hoje }) {
       )}
       <div className="acoes">
         <button type="submit" className="primario" disabled={ocupado}>{ocupado ? 'Salvando…' : 'Salvar escala'}</button>
-        {salvo && <span className="mensagem ok">Escala salva</span>}
       </div>
       <Erro texto={erro} />
     </form>
