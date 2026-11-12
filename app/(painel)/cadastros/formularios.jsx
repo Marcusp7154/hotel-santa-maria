@@ -10,7 +10,7 @@ export function Abas({ admin }) {
   const abas = [
     ['/cadastros/quartos', 'Quartos'],
     ['/cadastros/produtos', 'Produtos'],
-    ...(admin ? [['/cadastros/equipe', 'Equipe']] : []),
+    ...(admin ? [['/cadastros/equipe', 'Acessos ao sistema']] : []),
   ];
   return (
     <nav className="abas">
@@ -36,7 +36,7 @@ function converter(campos, valores) {
     if (c.bloqueado) continue;
     let v = valores[c.nome];
     if (c.tipo === 'numero') v = v === '' || v === null ? null : Number(String(v).replace(',', '.'));
-    if (c.tipo === 'texto' || c.tipo === 'select') v = typeof v === 'string' ? v.trim() || null : v;
+    if (c.tipo === 'texto' || c.tipo === 'select' || c.tipo === 'data') v = typeof v === 'string' ? v.trim() || null : v;
     linha[c.nome] = v;
   }
   return linha;
@@ -44,7 +44,7 @@ function converter(campos, valores) {
 
 /**
  * Formulário de uma linha de cadastro. Sem `id`, cria um registro novo; com `id`, salva alterações.
- * campos: [{ nome, rotulo, tipo: 'texto'|'numero'|'select'|'check', opcoes: [[valor, rotulo]], largo, obrigatorio, passo, bloqueado }]
+ * campos: [{ nome, rotulo, tipo: 'texto'|'numero'|'data'|'select'|'check', opcoes: [[valor, rotulo]], largo, obrigatorio, passo, bloqueado }]
  */
 export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar }) {
   const { ocupado, erro, setErro, rodar } = useAcao();
@@ -93,7 +93,8 @@ export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar }) {
                 {c.opcoes.map(([v, rot]) => <option key={v} value={v}>{rot}</option>)}
               </select>
             ) : (
-              <input id={idCampo} type={c.tipo === 'numero' ? 'number' : 'text'} step={c.passo ?? (c.tipo === 'numero' ? '0.01' : undefined)}
+              <input id={idCampo} type={c.tipo === 'numero' ? 'number' : c.tipo === 'data' ? 'date' : 'text'}
+                     step={c.passo ?? (c.tipo === 'numero' ? '0.01' : undefined)}
                      min={c.tipo === 'numero' ? 0 : undefined} value={valores[c.nome] ?? ''} disabled={c.bloqueado || ocupado}
                      onChange={(e) => mudar(c.nome, e.target.value)} />
             )}

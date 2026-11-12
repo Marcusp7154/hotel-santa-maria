@@ -34,6 +34,11 @@ export default async function PainelLayout({ children }) {
         <nav>
           <Link href="/">Hoje</Link>
           <Link href="/mapa">Mapa de ocupação</Link>
+          {['admin', 'gerente'].includes(perfil.perfil) ? (
+            <Link href="/funcionarios">Funcionários</Link>
+          ) : (
+            <Link href="/funcionarios/escala">Escala</Link>
+          )}
           {['admin', 'gerente'].includes(perfil.perfil) && <Link href="/cadastros">Cadastros</Link>}
         </nav>
         <div className="usuario">

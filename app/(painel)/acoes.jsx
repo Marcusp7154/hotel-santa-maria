@@ -5,6 +5,27 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { brl, NOME_FORMA, NOME_STATUS_QUARTO } from '@/lib/formato';
 
+// Erros técnicos do banco em português
+const ERROS = [
+  ['um_salario_por_mes', 'Este funcionário já tem salário lançado neste mês. Apague a linha do salário para lançar outro.'],
+  ['um_desconto_por_ocorrencia', 'Esta ocorrência já foi descontada.'],
+  ['ferias_sem_sobreposicao', 'Já existem férias registradas nesse período.'],
+  ['escala_excecoes_funcionario_id_data_key', 'Já existe uma troca para este dia.'],
+  ['remuneracoes_funcionario_id_vigente_desde_key', 'Já existe um salário a partir dessa data.'],
+  ['funcionarios_perfil_id_key', 'Este login já está ligado a outro funcionário.'],
+  ['quartos_hotel_id_numero_key', 'Já existe um quarto com este número.'],
+  ['tipos_quarto_hotel_id_nome_key', 'Já existe um tipo de quarto com este nome.'],
+  ['produtos_hotel_id_nome_key', 'Já existe um produto com este nome.'],
+  ['hospedes_documento_unico', 'Já existe um hóspede com este documento.'],
+  ['violates foreign key constraint', 'Não dá para apagar: este registro já está em uso. Desative em vez de apagar.'],
+  ['row-level security', 'Sem permissão para isso.'],
+];
+
+export function traduzirErro(mensagem = '') {
+  const achado = ERROS.find(([chave]) => mensagem.includes(chave));
+  return achado ? achado[1] : mensagem;
+}
+
 // Roda uma chamada ao Supabase, mostra o erro em português e atualiza a tela
 export function useAcao() {
   const router = useRouter();
@@ -17,7 +38,7 @@ export function useAcao() {
     try {
       const { data, error } = await chamada(createClient());
       if (error) {
-        setErro(error.message);
+        setErro(traduzirErro(error.message));
         return { ok: false };
       }
       router.refresh();
@@ -36,8 +57,8 @@ export function Erro({ texto }) {
   return texto ? <div className="mensagem erro">{texto}</div> : null;
 }
 
-export function BotaoImprimir() {
-  return <button className="nao-imprimir" onClick={() => window.print()}>Imprimir notinha</button>;
+export function BotaoImprimir({ rotulo = 'Imprimir notinha' }) {
+  return <button className="nao-imprimir" onClick={() => window.print()}>{rotulo}</button>;
 }
 
 export function AtribuirQuarto({ reservaQuartoId, quartoAtual, opcoes }) {

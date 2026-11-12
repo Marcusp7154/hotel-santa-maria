@@ -208,6 +208,46 @@ input[type='number'] { width: 96px; }
 .marcar { display: flex; gap: 6px; align-items: center; font-size: 14px; padding-bottom: 7px; }
 .nota { padding: 10px 14px; font-size: 13px; color: var(--texto-2); }
 
+/* Escala */
+.escala-rolagem { overflow-x: auto; background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); }
+.escala { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; }
+.escala th, .escala td { border-bottom: 1px solid var(--borda); border-right: 1px solid var(--borda); padding: 0; text-align: center; min-width: 30px; }
+.escala th { padding: 5px 2px; font-weight: 600; color: var(--texto-2); }
+.escala th b { display: block; font-size: 13px; color: var(--texto); }
+.escala .fixa { position: sticky; left: 0; z-index: 2; background: var(--superficie); text-align: left; padding: 6px 10px; min-width: 150px; white-space: nowrap; }
+.escala td.fixa { font-weight: 600; font-size: 13px; }
+.escala td.fixa small { display: block; font-weight: 400; color: var(--texto-2); font-size: 11px; }
+.escala .total { padding: 0 8px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.escala .fds { background: var(--superficie-2); }
+.escala .hoje { background: var(--marca-suave); }
+.escala td.fora { background: repeating-linear-gradient(45deg, transparent 0 4px, var(--superficie-2) 4px 8px); }
+.escala .grupo-linha td { position: sticky; left: 0; text-align: left; padding: 6px 10px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.4px; background: var(--superficie-2); color: var(--texto-2); }
+.turno { display: block; width: 100%; height: 34px; border: 0; border-radius: 0; padding: 0; font-size: 12px; font-weight: 700; background: transparent; color: var(--texto); }
+.turno:disabled { cursor: default; opacity: 1; }
+.turno:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--borda); }
+.turno.selecionado { box-shadow: inset 0 0 0 2px var(--texto) !important; }
+.t-M { background: var(--info-suave); color: var(--info); }
+.t-T { background: var(--alerta-suave); color: var(--alerta); }
+.t-D { background: var(--ok-suave); color: var(--ok); }
+.t-N { background: var(--marca); color: var(--superficie); }
+.t-F { background: var(--neutro-suave); color: var(--texto-2); }
+.t-A { background: var(--erro-suave); color: var(--erro); }
+.t-X { background: var(--erro); color: var(--superficie); }
+.turno.troca, .turno-legenda.troca { outline: 2px dashed currentColor; outline-offset: -4px; }
+.turno-legenda { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 5px; font-size: 11px; font-weight: 700; border: 1px solid var(--borda); vertical-align: middle; }
+.editor-dia { padding: 12px 14px; display: grid; gap: 10px; }
+.linha-editor { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.padrao-escala { padding: 12px 14px; border-bottom: 1px solid var(--borda); display: grid; gap: 10px; }
+.padrao-escala:last-child { border-bottom: 0; }
+.semana-grade { display: grid; grid-template-columns: 90px 120px 120px; gap: 6px 10px; align-items: center; }
+
+/* Salários */
+.texto-erro { color: var(--erro); }
+.tabela .linha-total td { font-weight: 700; border-top: 2px solid var(--borda); }
+.assinatura { padding: 14px; border-top: 1px solid var(--borda); }
+.assinatura p { margin: 0 0 36px; }
+.linha-assinatura { border-top: 1px solid var(--texto); width: min(320px, 100%); padding-top: 4px; margin-bottom: 8px; }
+
 @media print {
   .topo, .nao-imprimir { display: none !important; }
   body { background: #fff; color: #000; font-size: 12px; }
