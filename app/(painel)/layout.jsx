@@ -43,6 +43,7 @@ export default async function PainelLayout({ children }) {
   const itens = [
     { href: '/', nome: 'Hoje', icone: 'hoje' },
     { href: '/mapa', nome: 'Mapa de ocupação', icone: 'mapa' },
+    ...(financeiro ? [{ href: '/reservas', nome: 'Reservas', icone: 'reservas' }] : []),
     ...(financeiro ? [{ href: '/caixa', nome: 'Caixa', icone: 'caixa' }] : []),
     gestor
       ? { href: '/funcionarios', nome: 'Funcionários', icone: 'equipe' }

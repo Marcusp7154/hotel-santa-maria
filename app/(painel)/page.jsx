@@ -104,7 +104,12 @@ export default async function Hoje() {
           <h1>Hoje</h1>
           <p>{hoje ? dataLonga(hoje) : ''}</p>
         </div>
-        {financeiro && <BotaoAuditoria />}
+        {financeiro && (
+          <div className="acoes">
+            <Link href="/reservas/nova" className="botao primario">+ Nova reserva</Link>
+            <BotaoAuditoria />
+          </div>
+        )}
       </div>
 
       <section className="indicadores">
@@ -119,14 +124,19 @@ export default async function Hoje() {
       <div className="colunas">
         <section className="bloco">
           <header><h2>Chegadas</h2><span className="contagem">{chegadas.length}</span></header>
-          {chegadas.length === 0 && <div className="vazio">Nenhuma chegada pendente.</div>}
+          {chegadas.length === 0 && (
+            <div className="vazio">
+              Nenhuma chegada pendente.
+              {financeiro && <> <Link href="/reservas/nova?origem=balcao">Hospedar alguém que chegou agora</Link></>}
+            </div>
+          )}
           {chegadas.map((r) => {
             const rqs = quartosDaReserva(r);
             const atrasada = r.data_checkin < hoje;
             return (
               <div className="cartao" key={r.id}>
                 <div className="linha">
-                  <span className="nome">{r.hospedes?.nome}</span>
+                  <Link href={`/reservas/${r.id}`} className="nome">{r.hospedes?.nome}</Link>
                   <span className={`etiqueta ${r.status}`}>{NOME_STATUS_RESERVA[r.status]}</span>
                 </div>
                 <div className="detalhe">

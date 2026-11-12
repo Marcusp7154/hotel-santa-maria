@@ -20,6 +20,7 @@ const ERROS = [
   ['quartos_hotel_id_numero_key', 'Já existe um quarto com este número.'],
   ['tipos_quarto_hotel_id_nome_key', 'Já existe um tipo de quarto com este nome.'],
   ['produtos_hotel_id_nome_key', 'Já existe um produto com este nome.'],
+  ['sem_overbooking_quarto', 'Este quarto já está reservado em alguma dessas noites. Escolha outro quarto ou outras datas.'],
   ['hospedes_documento_unico', 'Já existe um hóspede com este documento.'],
   ['violates foreign key constraint', 'Não dá para apagar: este registro já está em uso. Desative em vez de apagar.'],
   ['row-level security', 'Sem permissão para isso.'],

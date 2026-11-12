@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 const DIAS = 14;
 
-function Linha({ rotulo, sub, segmentos, dias, inicio, hoje }) {
+function Linha({ rotulo, sub, segmentos, dias, inicio, hoje, quartoId }) {
   const colunas = `130px repeat(${dias.length}, minmax(52px, 1fr))`;
   return (
     <div className="linha-mapa" style={{ gridTemplateColumns: colunas }}>
@@ -14,6 +14,13 @@ function Linha({ rotulo, sub, segmentos, dias, inicio, hoje }) {
       {dias.map((d, i) => {
         const dow = paraData(d).getUTCDay();
         const classe = `dia${d === hoje ? ' hoje' : ''}${dow === 0 || dow === 6 ? ' fim-semana' : ''}`;
+        // Dia livre de um quarto, de hoje em diante: clicar abre uma reserva já com quarto e data
+        if (quartoId && d >= hoje) {
+          return (
+            <Link key={d} href={`/reservas/nova?quarto=${quartoId}&entrada=${d}`} className={`${classe} livre`}
+                  style={{ gridColumn: i + 2 }} title={`Reservar ${rotulo} a partir de ${dataCurta(d)}`} aria-label={`Reservar quarto ${rotulo} em ${dataCurta(d)}`} />
+          );
+        }
         return <div key={d} className={classe} style={{ gridColumn: i + 2 }} />;
       })}
       {segmentos.map((s) => {
@@ -24,14 +31,15 @@ function Linha({ rotulo, sub, segmentos, dias, inicio, hoje }) {
         const c2 = diasEntre(inicio, fim) + 2;
         if (c2 <= c1) return null;
         return (
-          <div
+          <Link
             key={s.reserva_quarto_id}
+            href={`/reservas/${s.reserva_id}`}
             className={`barra ${s.status_reserva}`}
             style={{ gridColumn: `${c1} / ${c2}` }}
             title={`${s.hospede} · ${s.codigo} · ${dataCurta(s.data_inicio)} a ${dataCurta(s.data_fim)} · ${NOME_STATUS_RESERVA[s.status_reserva]}`}
           >
             {s.hospede} · {s.codigo}
-          </div>
+          </Link>
         );
       })}
     </div>
@@ -64,6 +72,7 @@ export default async function Mapa({ searchParams }) {
           <p>{dataCurta(inicio)} a {dataCurta(somarDias(fim, -1))}</p>
         </div>
         <div className="mapa-navegacao">
+          <Link className="botao primario" href="/reservas/nova">+ Nova reserva</Link>
           <Link className="botao" href={`/mapa?inicio=${somarDias(inicio, -7)}`}>← 7 dias</Link>
           <Link className="botao" href="/mapa">Hoje</Link>
           <Link className="botao" href={`/mapa?inicio=${somarDias(inicio, 7)}`}>7 dias →</Link>
@@ -93,7 +102,7 @@ export default async function Mapa({ searchParams }) {
               {doTipo.map((q) => (
                 <Linha key={q.id} rotulo={q.numero} sub={q.andar != null ? `${q.andar}º andar` : null}
                        segmentos={ocupacao.filter((o) => o.quarto_id === q.id)}
-                       dias={dias} inicio={inicio} hoje={hoje} />
+                       dias={dias} inicio={inicio} hoje={hoje} quartoId={q.id} />
               ))}
               {pendentes.map((o) => (
                 <Linha key={o.reserva_quarto_id} rotulo="Sem quarto" sub="atribuir na chegada"
@@ -111,6 +120,7 @@ export default async function Mapa({ searchParams }) {
         <span><span className="barra confirmada">Confirmada</span></span>
         <span><span className="barra hospedado">Hospedado</span></span>
         <span><span className="barra finalizada">Finalizada</span></span>
+        <span className="fraco">Clique num dia livre para reservar aquele quarto.</span>
       </div>
     </>
   );

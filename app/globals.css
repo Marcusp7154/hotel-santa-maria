@@ -608,3 +608,132 @@ details.recolhivel[open] > summary .seta { transform: rotate(-135deg) translate(
 .mov-acao { padding: 4px 16px 12px 76px; background: var(--superficie-2); }
 .mov-rodape { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--borda); font-size: 14px; }
 @media (max-width: 640px) { .mov-acao { padding-left: 16px; } }
+
+/* ---------------------------------------------------------------------
+   Reservas
+   --------------------------------------------------------------------- */
+a.botao.primario { background: var(--marca); border-color: var(--marca); color: var(--sobre-marca); }
+a.botao.primario:hover { background: var(--marca-forte); border-color: var(--marca-forte); color: var(--sobre-marca); }
+button.grande { padding: 12px 22px; font-size: 15px; }
+button.fantasma.pequeno { padding: 4px 8px; font-size: 13px; justify-self: start; }
+.voltar { display: inline-block; font-size: 13px; font-weight: 650; margin-bottom: 4px; color: var(--texto-2); }
+.voltar:hover { color: var(--marca); }
+.etiqueta.grande { font-size: 14px; padding: 5px 12px; }
+textarea {
+  font: inherit; font-size: 14px; width: 100%; resize: vertical; padding: 9px 11px;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio-p); background: var(--superficie); color: var(--texto);
+}
+textarea:focus { outline: none; border-color: var(--marca); box-shadow: 0 0 0 3px var(--marca-suave); }
+.rotulo-campo { font-size: 13px; color: var(--texto-2); font-weight: 600; }
+
+.nova-reserva { display: grid; gap: 16px; max-width: 980px; }
+.etapa > header h2 { display: flex; align-items: center; gap: 10px; }
+.etapa-n {
+  display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--marca); color: var(--sobre-marca); font-size: 14px; font-weight: 800;
+}
+.etapa-corpo { padding: 16px; display: grid; gap: 14px; }
+.grade-campos { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: start; }
+.grade-campos .campo.largo2 { flex: 1 1 260px; }
+.grade-campos .campo.largo2 input { width: 100%; }
+.grade-campos .campo { min-width: 0; }
+.grade-campos .campo small { font-size: 12px; }
+.doc-junto { display: flex; }
+.doc-junto select { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: 0; }
+.doc-junto input { border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 0; width: 190px; }
+
+.busca-hospede { position: relative; }
+.busca-hospede > input { width: 100%; padding: 11px 13px; background: var(--superficie-2); }
+.busca-hospede .achados {
+  list-style: none; margin: 6px 0 0; padding: 4px; border: 1px solid var(--borda); border-radius: var(--raio-p);
+  background: var(--superficie); box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
+  position: absolute; left: 0; right: 0; z-index: 5; max-height: 300px; overflow-y: auto;
+}
+.busca-hospede .achados li.fraco { padding: 10px 12px; font-size: 14px; }
+.busca-hospede .achados button {
+  all: unset; box-sizing: border-box; width: 100%; display: grid; padding: 9px 12px; border-radius: 8px; cursor: pointer;
+}
+.busca-hospede .achados button:hover, .busca-hospede .achados button:focus-visible { background: var(--marca-tinta); }
+.busca-hospede .achados small { color: var(--texto-2); font-size: 12px; }
+.hospede-escolhido {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--raio-p);
+  background: var(--marca-tinta); box-shadow: inset 3px 0 0 var(--marca);
+}
+.hospede-escolhido > span:nth-child(2) { display: grid; flex: 1; }
+
+.tipo-grupo { display: grid; gap: 8px; }
+.tipo-grupo + .tipo-grupo { margin-top: 6px; }
+.tipo-nome { font-weight: 700; }
+.tipo-nome small { font-weight: 500; margin-left: 6px; }
+.quartos-livres { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; align-items: start; }
+.quarto-livre {
+  border: 1.5px solid var(--borda-forte); border-radius: 12px; background: var(--superficie); overflow: hidden;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.quarto-livre > button {
+  all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; gap: 2px; padding: 10px 12px;
+}
+.quarto-livre > button:focus-visible { outline: 2px solid var(--marca); outline-offset: -2px; border-radius: 10px; }
+.quarto-livre:hover { border-color: var(--marca); }
+.quarto-livre .q-num { font-family: var(--fonte-titulo); font-size: 24px; font-weight: 800; line-height: 1.1; }
+.quarto-livre .q-total { font-size: 13px; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.quarto-livre .etiqueta { justify-self: start; margin-top: 4px; }
+.quarto-livre.marcado { border-color: var(--marca); box-shadow: 0 0 0 3px var(--marca-suave); background: var(--marca-tinta); }
+.quarto-livre.marcado .q-num { color: var(--marca); }
+.q-combinada { display: grid; gap: 3px; padding: 0 12px 10px; font-size: 12px; color: var(--texto-2); font-weight: 600; }
+.q-combinada input { width: 100%; padding: 5px 8px; font-size: 14px; }
+
+.fechamento { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: end; }
+.total-reserva { display: grid; }
+.total-reserva > small:first-child { font-size: 13px; color: var(--texto-2); font-weight: 600; }
+.total-reserva b { font-family: var(--fonte-titulo); font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fechamento .nota { flex-basis: 100%; margin: 0; }
+label.marcar {
+  display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--raio-p);
+  border: 1.5px dashed var(--ok); background: var(--ok-suave); cursor: pointer;
+}
+label.marcar input { margin-top: 2px; }
+label.marcar > span { display: grid; }
+
+.filtro-reservas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.grupo-dia { margin-bottom: 14px; }
+.lista-reservas { list-style: none; margin: 0; padding: 0; }
+.lista-reservas li + li { border-top: 1px solid var(--borda); }
+.linha-reserva {
+  display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 14px; align-items: center;
+  padding: 11px 16px; color: inherit;
+}
+.linha-reserva:hover { background: var(--superficie-2); color: inherit; }
+.lr-quartos { display: flex; flex-wrap: wrap; gap: 4px; }
+.lr-quartos b {
+  font-family: var(--fonte-titulo); font-size: 17px; font-weight: 800; color: var(--marca);
+  background: var(--marca-tinta); border-radius: 8px; padding: 2px 8px; min-width: 44px; text-align: center;
+}
+.lr-quem { display: grid; min-width: 0; }
+.lr-quem b, .lr-quem small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lr-quem small { color: var(--texto-2); font-size: 13px; }
+.lr-fim { display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+
+.reserva-detalhe { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.estadia-datas { display: flex; align-items: center; gap: 14px; padding: 16px; border-bottom: 1px solid var(--borda); }
+.estadia-datas > div { display: grid; }
+.estadia-datas small { font-size: 12px; color: var(--texto-2); font-weight: 600; }
+.estadia-datas b { font-family: var(--fonte-titulo); font-size: 30px; line-height: 1.05; }
+.estadia-datas .fraco { font-size: 12px; }
+.estadia-datas .seta { font-size: 22px; color: var(--marca); }
+.reserva-acoes { padding: 12px 16px; border-top: 1px solid var(--borda); }
+.reserva-acoes .caixa-acao { flex-basis: 100%; border-radius: var(--raio-p); border: 1px solid var(--borda); }
+.editar-hospede { padding: 14px 16px; border-bottom: 1px solid var(--borda); background: var(--marca-tinta); }
+a.cartao.linha-link { color: inherit; }
+a.cartao.linha-link:hover { background: var(--superficie-2); }
+
+@media (max-width: 640px) {
+  .linha-reserva { grid-template-columns: 56px minmax(0, 1fr); }
+  .lr-fim { grid-column: 2; justify-content: flex-start; }
+  .lr-quem small { white-space: normal; }
+  .doc-junto input { width: 100%; }
+}
+.linha-mapa a.dia.livre { display: block; }
+.linha-mapa a.dia.livre:hover { background: var(--marca-suave); box-shadow: inset 0 0 0 1.5px var(--marca); border-radius: 6px; }
+a.barra { text-decoration: none; }
+a.barra:hover { filter: brightness(0.95); text-decoration: none; }
