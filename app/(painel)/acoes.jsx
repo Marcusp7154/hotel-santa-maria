@@ -9,6 +9,8 @@ import { brl, NOME_FORMA, NOME_STATUS_QUARTO } from '@/lib/formato';
 const ERROS = [
   ['um_salario_por_mes', 'Este funcionário já tem salário lançado neste mês. Apague a linha do salário para lançar outro.'],
   ['um_desconto_por_ocorrencia', 'Esta ocorrência já foi descontada.'],
+  ['um_estorno_por_pagamento', 'Este pagamento já foi estornado.'],
+  ['um_turno_aberto_por_usuario', 'Você já tem um caixa aberto.'],
   ['ferias_sem_sobreposicao', 'Já existem férias registradas nesse período.'],
   ['escala_excecoes_funcionario_id_data_key', 'Já existe uma troca para este dia.'],
   ['remuneracoes_funcionario_id_vigente_desde_key', 'Já existe um salário a partir dessa data.'],

@@ -167,7 +167,13 @@ export default async function Hoje() {
 
         {financeiro && (
           <section className="bloco">
-            <header><h2>Meu caixa</h2>{turno && <span className="etiqueta limpo">Aberto</span>}</header>
+            <header>
+              <h2>Meu caixa</h2>
+              <span className="acoes">
+                {turno && <span className="etiqueta limpo">Aberto</span>}
+                <Link href="/caixa">Ver caixa completo</Link>
+              </span>
+            </header>
             <Caixa turno={turno} resumo={resumoTurno} />
           </section>
         )}

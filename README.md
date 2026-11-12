@@ -15,7 +15,9 @@ Painel web (Next.js 15 + Supabase) da fase 1 do sistema de gestão do hotel.
   mês com vales, extras, descontos, pagamentos e recibo para imprimir (salários só o administrador vê).
 - **Estoque**: entrada de mercadoria, ajuste pela contagem e perda; baixa automática a cada venda,
   devolução quando a venda é estornada, bloqueio de venda sem saldo e aviso de estoque baixo.
-- **Meu caixa**: abrir turno, sangria e suprimento, dinheiro esperado na gaveta e fechamento com diferença.
+- **Caixa** (menu próprio): abrir turno, sangria e suprimento, movimento do turno com estorno de pagamento,
+  fechamento com diferença e relatório para imprimir. Gerência vê os caixas abertos, fecha o de quem
+  esqueceu e acompanha o histórico do mês com o total por forma de pagamento.
 - **Mapa de ocupação**: 14 dias por quartos, agrupado por tipo, navegando de 7 em 7 dias.
 
 Cada perfil vê só o que pode: a governança não vê nada financeiro; recepção não mexe em cadastros.
