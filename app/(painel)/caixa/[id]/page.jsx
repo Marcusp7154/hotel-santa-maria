@@ -12,18 +12,20 @@ export default async function RelatorioTurno({ params }) {
   const { id } = await params;
   const { supabase } = await contexto();
 
-  const [turnoR, pagR, movR, hotelR] = await Promise.all([
+  const [turnoR, pagR, movR, despR, hotelR] = await Promise.all([
     supabase.from('turnos_caixa').select('*, perfis ( nome )').eq('id', id).maybeSingle(),
     supabase.from('pagamentos').select('id, forma, valor, estorno_de, motivo, criado_em, contas ( titular, reservas ( codigo ) )')
       .eq('turno_id', id).order('criado_em'),
     supabase.from('movimentos_caixa').select('*').eq('turno_id', id).order('criado_em'),
+    supabase.from('despesas').select('*, categorias_despesa ( nome )').eq('turno_id', id).order('criado_em'),
     supabase.from('hoteis').select('nome').maybeSingle(),
   ]);
   const t = turnoR.data;
   if (!t) notFound();
   const pags = pagR.data || [];
   const movs = movR.data || [];
-  const r = resumirTurno(t, pags, movs);
+  const desps = despR.data || [];
+  const r = resumirTurno(t, pags, movs, desps);
   const fechado = Boolean(t.fechado_em);
   const dif = Number(t.diferenca || 0);
 
@@ -50,6 +52,8 @@ export default async function RelatorioTurno({ params }) {
           <div className="linha"><span>Total recebido</span><b>{brl(r.recebido)}</b></div>
           {r.suprimento > 0 && <div className="linha"><span>Suprimentos</span><b>{brl(r.suprimento)}</b></div>}
           {r.sangria > 0 && <div className="linha"><span>Sangrias</span><b>− {brl(r.sangria)}</b></div>}
+          {r.despesaDinheiro > 0 && <div className="linha"><span>Despesas pagas em dinheiro</span><b>− {brl(r.despesaDinheiro)}</b></div>}
+          {r.despesaOutras > 0 && <div className="linha fraco"><span>Despesas no Pix ou cartão (não mexem na gaveta)</span><span>{brl(r.despesaOutras)}</span></div>}
           <div className="linha saldo-final"><span>Dinheiro esperado na gaveta</span><b>{brl(fechado ? t.valor_esperado : r.esperado)}</b></div>
           {fechado && (
             <>
@@ -66,7 +70,7 @@ export default async function RelatorioTurno({ params }) {
         <table className="tabela">
           <thead><tr><th>Hora</th><th>Descrição</th><th>Forma</th><th className="num">Valor</th></tr></thead>
           <tbody>
-            {pags.length + movs.length === 0 && <tr><td colSpan={4} className="fraco">Nenhum movimento.</td></tr>}
+            {pags.length + movs.length + desps.length === 0 && <tr><td colSpan={4} className="fraco">Nenhum movimento.</td></tr>}
             {[
               ...pags.map((p) => ({
                 k: p.id, em: p.criado_em, forma: NOME_FORMA[p.forma], valor: Number(p.valor),
@@ -75,6 +79,13 @@ export default async function RelatorioTurno({ params }) {
               ...movs.map((m) => ({
                 k: m.id, em: m.criado_em, forma: 'Dinheiro', valor: m.tipo === 'sangria' ? -Number(m.valor) : Number(m.valor),
                 desc: `${m.tipo === 'sangria' ? 'Sangria' : 'Suprimento'} · ${m.motivo}`,
+              })),
+              ...desps.map((d) => ({
+                k: d.id, em: d.criado_em, forma: NOME_FORMA[d.forma],
+                valor: d.cancelada_em ? 0 : (d.forma === 'dinheiro' ? -Number(d.valor) : Number(d.valor)),
+                desc: `Despesa · ${d.categorias_despesa?.nome} · ${d.descricao}${d.fornecedor ? ` · ${d.fornecedor}` : ''}`
+                  + (d.cancelada_em ? ` · CANCELADA (${d.motivo_cancelamento}) · era ${brl(d.valor)}` : '')
+                  + (!d.cancelada_em && d.forma !== 'dinheiro' ? ' · fora da gaveta' : ''),
               })),
             ].sort((a, b) => (a.em < b.em ? -1 : 1)).map((x) => (
               <tr key={x.k}>

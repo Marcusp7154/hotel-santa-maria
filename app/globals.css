@@ -241,6 +241,10 @@ input[type='number'] { width: 96px; }
 .padrao-escala:last-child { border-bottom: 0; }
 .semana-grade { display: grid; grid-template-columns: 90px 120px 120px; gap: 6px 10px; align-items: center; }
 
+/* Despesas */
+.barra-cat { height: 10px; border-radius: 5px; background: var(--marca); }
+.tabela tr.linha-ativa td { background: var(--marca-suave); }
+
 /* Salários */
 .texto-erro { color: var(--erro); }
 .tabela .linha-total td { font-weight: 700; border-top: 2px solid var(--borda); }

@@ -5,7 +5,7 @@ import { horaDe, quando, resumirTurno, FORMAS } from '@/lib/caixa';
 import { mesValido, nomeMes, somarMes } from '@/lib/rh';
 import { contexto, SemAcesso } from '../funcionarios/acesso';
 import { SeletorMes } from '../funcionarios/seletor-mes';
-import { EstornarPagamento, FecharTurnoDeOutro } from './componentes';
+import { CancelarDespesa, EstornarPagamento, FecharTurnoDeOutro, LancarDespesa } from './componentes';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,29 +36,36 @@ export default async function PaginaCaixa({ searchParams }) {
   const nomeDe = Object.fromEntries((perfisR.data || []).map((p) => [p.id, p.nome]));
 
   const ids = [meu?.id, ...abertos.map((t) => t.id), ...historico.map((t) => t.id)].filter(Boolean);
-  const [pagR, movR, resumoR] = await Promise.all([
+  const [pagR, movR, despR, resumoR, catR] = await Promise.all([
     ids.length ? supabase.from('pagamentos').select(CAMPOS_PAGAMENTO).in('turno_id', ids).order('criado_em') : { data: [] },
     ids.length ? supabase.from('movimentos_caixa').select('*').in('turno_id', ids).order('criado_em') : { data: [] },
+    ids.length ? supabase.from('despesas').select('*, categorias_despesa ( nome )').in('turno_id', ids).order('criado_em') : { data: [] },
     meu ? supabase.rpc('fn_resumo_turno', { p_turno: meu.id }) : { data: [] },
+    supabase.from('categorias_despesa').select('id, nome').eq('ativo', true).order('nome'),
   ]);
   const pagamentos = pagR.data || [];
   const movimentos = movR.data || [];
+  const despesas = despR.data || [];
   const doTurno = (t) => ({
     pags: pagamentos.filter((p) => p.turno_id === t.id),
     movs: movimentos.filter((m) => m.turno_id === t.id),
+    desps: despesas.filter((d) => d.turno_id === t.id),
   });
-  const resumo = (t) => { const { pags, movs } = doTurno(t); return resumirTurno(t, pags, movs); };
+  const resumo = (t) => { const { pags, movs, desps } = doTurno(t); return resumirTurno(t, pags, movs, desps); };
 
   const meusPags = meu ? doTurno(meu).pags : [];
   const meusMovs = meu ? doTurno(meu).movs : [];
+  const minhasDesps = meu ? doTurno(meu).desps : [];
   const estornados = new Set(pagamentos.filter((p) => p.estorno_de).map((p) => p.estorno_de));
 
   const totalMes = Object.fromEntries(FORMAS.map((f) => [f, 0]));
   let diferencaMes = 0;
+  let despesaDinheiroMes = 0;
   for (const t of historico) {
     const r = resumo(t);
     for (const f of FORMAS) totalMes[f] += r.porForma[f];
     diferencaMes += Number(t.diferenca || 0);
+    despesaDinheiroMes += r.despesaDinheiro;
   }
   const recebidoMes = Object.values(totalMes).reduce((a, b) => a + b, 0);
 
@@ -74,8 +81,8 @@ export default async function PaginaCaixa({ searchParams }) {
 
         {meu && (
           <section className="bloco">
-            <header><h2>Movimento do meu turno</h2><span className="contagem">{meusPags.length + meusMovs.length}</span></header>
-            {meusPags.length + meusMovs.length === 0 && <div className="vazio">Nada recebido ainda neste turno.</div>}
+            <header><h2>Movimento do meu turno</h2><span className="contagem">{meusPags.length + meusMovs.length + minhasDesps.length}</span></header>
+            {meusPags.length + meusMovs.length + minhasDesps.length === 0 && <div className="vazio">Nada lançado ainda neste turno.</div>}
             {meusPags.map((p) => (
               <div className="cartao" key={p.id}>
                 <div className="linha">
@@ -91,6 +98,22 @@ export default async function PaginaCaixa({ searchParams }) {
                   : <EstornarPagamento pagamento={p} temTurno />)}
               </div>
             ))}
+            {minhasDesps.map((d) => (
+              <div className="cartao" key={d.id}>
+                <div className="linha">
+                  <span>
+                    <b>Despesa · {d.descricao}</b>
+                    <small className="fraco"> · {d.categorias_despesa?.nome}{d.fornecedor ? ` · ${d.fornecedor}` : ''} · {horaDe(d.criado_em)}</small>
+                  </span>
+                  <span className={`saldo${d.cancelada_em ? ' fraco' : ''}`}>
+                    {d.forma === 'dinheiro' ? '− ' : ''}{brl(d.valor)} {d.forma !== 'dinheiro' && <small>({NOME_FORMA[d.forma]})</small>}
+                  </span>
+                </div>
+                {d.cancelada_em
+                  ? <div className="detalhe">Cancelada: {d.motivo_cancelamento}</div>
+                  : <CancelarDespesa despesa={d} />}
+              </div>
+            ))}
             {meusMovs.map((m) => (
               <div className="cartao" key={m.id}>
                 <div className="linha">
@@ -102,6 +125,18 @@ export default async function PaginaCaixa({ searchParams }) {
           </section>
         )}
       </div>
+
+      <section className="bloco" style={{ marginTop: 16 }}>
+        <header>
+          <h2>Lançar despesa</h2>
+          <Link href="/caixa/despesas">Despesas do mês</Link>
+        </header>
+        <p className="nota">
+          Compras e pagamentos do dia a dia: pão, bolo, frutas, gás, manutenção, material de limpeza.
+          Em dinheiro, sai da gaveta e entra no fechamento do caixa; no Pix ou cartão, fica só registrada.
+        </p>
+        <LancarDespesa key={meu ? 'aberto' : 'fechado'} categorias={catR.data || []} temTurno={Boolean(meu)} />
+      </section>
 
       {gestor && abertos.length > 0 && (
         <section className="bloco" style={{ marginTop: 16 }}>
@@ -135,6 +170,9 @@ export default async function PaginaCaixa({ searchParams }) {
             {FORMAS.filter((f) => totalMes[f]).map((f) => (
               <div className="indicador" key={f}><div className="valor">{brl(totalMes[f])}</div><div className="rotulo">{NOME_FORMA[f]}</div></div>
             ))}
+            {despesaDinheiroMes > 0 && (
+              <div className="indicador"><div className="valor">− {brl(despesaDinheiroMes)}</div><div className="rotulo">Despesas pagas da gaveta</div></div>
+            )}
             <div className="indicador">
               <div className={`valor${diferencaMes < 0 ? ' texto-erro' : ''}`}>{brl(diferencaMes)}</div>
               <div className="rotulo">Diferença dos fechamentos</div>

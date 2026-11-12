@@ -11,6 +11,7 @@ const ERROS = [
   ['um_desconto_por_ocorrencia', 'Esta ocorrência já foi descontada.'],
   ['um_estorno_por_pagamento', 'Este pagamento já foi estornado.'],
   ['um_turno_aberto_por_usuario', 'Você já tem um caixa aberto.'],
+  ['categorias_despesa_hotel_id_nome_key', 'Já existe uma categoria com este nome.'],
   ['ferias_sem_sobreposicao', 'Já existem férias registradas nesse período.'],
   ['escala_excecoes_funcionario_id_data_key', 'Já existe uma troca para este dia.'],
   ['remuneracoes_funcionario_id_vigente_desde_key', 'Já existe um salário a partir dessa data.'],
@@ -273,7 +274,7 @@ export function Caixa({ turno, resumo }) {
   }
 
   const item = (k) => Number(resumo.find((r) => r.item === k)?.valor || 0);
-  const esperado = item('abertura') + item('recebido_dinheiro') + item('suprimento') - item('sangria');
+  const esperado = item('abertura') + item('recebido_dinheiro') + item('suprimento') - item('sangria') - item('despesa');
 
   return (
     <div className="cartao">
@@ -285,6 +286,7 @@ export function Caixa({ turno, resumo }) {
       )}
       {item('sangria') > 0 && <div className="linha"><span>Sangrias</span><b>− {brl(item('sangria'))}</b></div>}
       {item('suprimento') > 0 && <div className="linha"><span>Suprimentos</span><b>{brl(item('suprimento'))}</b></div>}
+      {item('despesa') > 0 && <div className="linha"><span>Despesas pagas em dinheiro</span><b>− {brl(item('despesa'))}</b></div>}
       <div className="linha"><span>Dinheiro esperado na gaveta</span><b>{brl(esperado)}</b></div>
       <MovimentoCaixa />
       <form className="acoes" onSubmit={async (e) => {

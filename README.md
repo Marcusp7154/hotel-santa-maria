@@ -18,6 +18,9 @@ Painel web (Next.js 15 + Supabase) da fase 1 do sistema de gestão do hotel.
 - **Caixa** (menu próprio): abrir turno, sangria e suprimento, movimento do turno com estorno de pagamento,
   fechamento com diferença e relatório para imprimir. Gerência vê os caixas abertos, fecha o de quem
   esqueceu e acompanha o histórico do mês com o total por forma de pagamento.
+- **Despesas**: compras e pagamentos do dia a dia (pão, bolo, frutas, manutenção, gás...) lançados
+  no caixa com categoria. Em dinheiro, saem da gaveta e entram no fechamento; no Pix ou cartão, só
+  ficam registradas. Relatório do mês por categoria e categorias editáveis pela gerência.
 - **Mapa de ocupação**: 14 dias por quartos, agrupado por tipo, navegando de 7 em 7 dias.
 
 Cada perfil vê só o que pode: a governança não vê nada financeiro; recepção não mexe em cadastros.
@@ -30,6 +33,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 3. `banco/hotel_fase1c.sql`: controle de estoque. Produtos que já existiam ficam sem controle
    até você marcar "Controlar estoque" e lançar a entrada.
 4. `banco/hotel_fase1d.sql`: funcionários, escala, faltas e atestados, férias e salários.
+5. `banco/hotel_fase1e.sql`: despesas do dia a dia lançadas no caixa.
 
 ## Publicar na Vercel
 
