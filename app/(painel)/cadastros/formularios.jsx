@@ -42,16 +42,79 @@ function converter(campos, valores) {
   return linha;
 }
 
+const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+// Valor de um campo do jeito que aparece no cartão
+function mostrar(c, v) {
+  if (v === '' || v === null || v === undefined) return '';
+  if (c.tipo === 'select') return (c.opcoes.find(([k]) => String(k) === String(v)) || [null, v])[1];
+  if (c.tipo === 'data') { const [a, m, d] = String(v).slice(0, 10).split('-'); return `${d}/${m}/${a}`; }
+  if (c.tipo === 'numero') return c.moeda ? moeda.format(Number(v)) : Number(v).toLocaleString('pt-BR');
+  return String(v);
+}
+
+function iniciais(texto) {
+  const p = String(texto || '').trim().split(/\s+/).filter(Boolean);
+  return ((p[0]?.[0] || '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase() || '?';
+}
+
+const IconeEditar = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 20h4L19 9l-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" />
+  </svg>
+);
+
+function Campos({ campos, valores, mudar, ocupado, prefixo }) {
+  return campos.map((c) => {
+    const idCampo = `${prefixo}-${c.nome}`;
+    if (c.tipo === 'check') {
+      return (
+        <label key={c.nome} className="marcar">
+          <input type="checkbox" checked={!!valores[c.nome]} disabled={c.bloqueado || ocupado}
+                 onChange={(e) => mudar(c.nome, e.target.checked)} />
+          {c.rotulo}
+        </label>
+      );
+    }
+    return (
+      <div key={c.nome} className={`campo${c.largo ? ' largo' : ''}`}>
+        <label htmlFor={idCampo}>{c.rotulo}</label>
+        {c.tipo === 'select' ? (
+          <select id={idCampo} value={valores[c.nome] ?? ''} disabled={c.bloqueado || ocupado}
+                  onChange={(e) => mudar(c.nome, e.target.value)}>
+            {!c.obrigatorio && <option value="">—</option>}
+            {c.obrigatorio && !valores[c.nome] && <option value="">Escolher…</option>}
+            {c.opcoes.map(([v, rot]) => <option key={v} value={v}>{rot}</option>)}
+          </select>
+        ) : (
+          <input id={idCampo} type={c.tipo === 'numero' ? 'number' : c.tipo === 'data' ? 'date' : 'text'}
+                 step={c.passo ?? (c.tipo === 'numero' ? '0.01' : undefined)}
+                 min={c.tipo === 'numero' ? 0 : undefined} value={valores[c.nome] ?? ''} disabled={c.bloqueado || ocupado}
+                 onChange={(e) => mudar(c.nome, e.target.value)} />
+        )}
+      </div>
+    );
+  });
+}
+
 /**
- * Formulário de uma linha de cadastro. Sem `id`, cria um registro novo; com `id`, salva alterações.
- * campos: [{ nome, rotulo, tipo: 'texto'|'numero'|'data'|'select'|'check', opcoes: [[valor, rotulo]], largo, obrigatorio, passo, bloqueado }]
+ * Cadastro em cartão. Sem `id`: botão "+ Novo" que abre o formulário. Com `id`: cartão com os dados e botão Editar.
+ * campos: [{ nome, rotulo, tipo: 'texto'|'numero'|'data'|'select'|'check', opcoes: [[valor, rotulo]], largo, obrigatorio,
+ *            passo, bloqueado, moeda,
+ *            papel: 'titulo'|'subtitulo'|'avatar'|'chip'|'oculto',   // onde aparece no cartão (padrão: lista de dados)
+ *            cores: { valor: 'cor' },                                 // cor do chip ou do avatar
+ *            seFalso, seVerdadeiro }]                                 // etiqueta para campos de marcar
+ * avatar: mostra um quadrado com as iniciais do título (ou o campo com papel 'avatar');
+ * corPor + cores: campo que decide a cor do quadrado e o mapa valor -> cor (marca, verde, ambar, azul, roxo, neutro).
  */
-export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar }) {
+export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar, rotuloNovo, avatar, corPor, cores, destaque, children }) {
   const { ocupado, erro, setErro, rodar } = useAcao();
   const [valores, setValores] = useState(() => valorInicial(campos, inicial));
-  const [salvo, setSalvo] = useState(false);
-  const mudar = (nome, v) => { setValores((x) => ({ ...x, [nome]: v })); setSalvo(false); };
-  const inativo = 'ativo' in valores && !valores.ativo;
+  const [salvos, setSalvos] = useState(() => valorInicial(campos, inicial));
+  const [editando, setEditando] = useState(false);
+  const [feito, setFeito] = useState(null);
+  const mudar = (nome, v) => { setValores((x) => ({ ...x, [nome]: v })); setFeito(null); };
 
   async function salvar(e) {
     e.preventDefault();
@@ -63,50 +126,118 @@ export function RegistroForm({ tabela, id, campos, inicial, rotuloSalvar }) {
     }
     const linha = converter(campos, valores);
     const r = await rodar((sb) => (id ? sb.from(tabela).update(linha).eq('id', id) : sb.from(tabela).insert(linha)));
-    if (r.ok) {
-      if (id) setSalvo(true);
-      else setValores(valorInicial(campos, null));
+    if (!r.ok) return;
+    if (id) { setSalvos(valores); setEditando(false); }
+    else {
+      const titulo = campos.find((c) => c.papel === 'titulo') || campos[0];
+      setFeito(`${mostrar(titulo, valores[titulo.nome])} adicionado.`);
+      setValores(valorInicial(campos, null));
     }
   }
 
-  return (
-    <form className={`form-linha${inativo ? ' inativo' : ''}${id ? '' : ' novo'}`} onSubmit={salvar}>
-      {campos.map((c) => {
-        const idCampo = `${tabela}-${id || 'novo'}-${c.nome}`;
-        if (c.tipo === 'check') {
-          return (
-            <label key={c.nome} className="marcar">
-              <input type="checkbox" checked={!!valores[c.nome]} disabled={c.bloqueado || ocupado}
-                     onChange={(e) => mudar(c.nome, e.target.checked)} />
-              {c.rotulo}
-            </label>
-          );
-        }
-        return (
-          <div key={c.nome} className={`campo${c.largo ? ' largo' : ''}`}>
-            <label htmlFor={idCampo}>{c.rotulo}</label>
-            {c.tipo === 'select' ? (
-              <select id={idCampo} value={valores[c.nome] ?? ''} disabled={c.bloqueado || ocupado}
-                      onChange={(e) => mudar(c.nome, e.target.value)}>
-                {!c.obrigatorio && <option value="">—</option>}
-                {c.obrigatorio && !valores[c.nome] && <option value="">Escolher…</option>}
-                {c.opcoes.map(([v, rot]) => <option key={v} value={v}>{rot}</option>)}
-              </select>
-            ) : (
-              <input id={idCampo} type={c.tipo === 'numero' ? 'number' : c.tipo === 'data' ? 'date' : 'text'}
-                     step={c.passo ?? (c.tipo === 'numero' ? '0.01' : undefined)}
-                     min={c.tipo === 'numero' ? 0 : undefined} value={valores[c.nome] ?? ''} disabled={c.bloqueado || ocupado}
-                     onChange={(e) => mudar(c.nome, e.target.value)} />
-            )}
+  // ----- Novo registro -----
+  if (!id) {
+    if (!editando) {
+      return (
+        <div className="novo-area">
+          <button type="button" className="novo-registro" onClick={() => { setEditando(true); setFeito(null); }}>
+            <span aria-hidden="true">+</span> {rotuloNovo || rotuloSalvar || 'Adicionar'}
+          </button>
+          {feito && <span className="mensagem ok">{feito}</span>}
+        </div>
+      );
+    }
+    return (
+      <div className="novo-area">
+        <form className="registro editando" onSubmit={salvar}>
+          <div className="registro-topo">
+            <b className="registro-titulo-form">{rotuloNovo || rotuloSalvar || 'Novo cadastro'}</b>
+            <button type="button" className="fantasma" onClick={() => setEditando(false)} disabled={ocupado}>Fechar</button>
           </div>
-        );
-      })}
-      <button type="submit" className={id ? '' : 'primario'} disabled={ocupado}>
-        {ocupado ? 'Salvando…' : rotuloSalvar || (id ? 'Salvar' : 'Adicionar')}
-      </button>
-      {salvo && <span className="mensagem ok">Salvo</span>}
-      <Erro texto={erro} />
-    </form>
+          <div className="registro-campos">
+            <Campos campos={campos} valores={valores} mudar={mudar} ocupado={ocupado} prefixo={`${tabela}-novo`} />
+          </div>
+          <div className="acoes">
+            <button type="submit" className="primario" disabled={ocupado}>{ocupado ? 'Salvando…' : rotuloSalvar || 'Adicionar'}</button>
+            {feito && <span className="mensagem ok">{feito} Pode cadastrar o próximo.</span>}
+          </div>
+          <Erro texto={erro} />
+        </form>
+      </div>
+    );
+  }
+
+  // ----- Registro existente -----
+  const v = editando ? salvos : valores;
+  const cTitulo = campos.find((c) => c.papel === 'titulo') || campos[0];
+  const cSub = campos.find((c) => c.papel === 'subtitulo');
+  const cAvatar = campos.find((c) => c.papel === 'avatar');
+  const titulo = mostrar(cTitulo, v[cTitulo.nome]);
+  const inativo = 'ativo' in v && !v.ativo;
+  const chips = [];
+  const dados = [];
+  for (const c of campos) {
+    if ([cTitulo, cSub, cAvatar].includes(c) || c.papel === 'oculto') continue;
+    if (c.tipo === 'check') {
+      const rot = v[c.nome] ? c.seVerdadeiro : c.seFalso;
+      if (rot) chips.push({ k: c.nome, rot, cor: v[c.nome] ? 'ok' : 'neutro' });
+      continue;
+    }
+    const texto = mostrar(c, v[c.nome]);
+    if (!texto) continue;
+    if (c.papel === 'chip') chips.push({ k: c.nome, rot: texto, cor: c.cores?.[v[c.nome]] || 'neutro' });
+    else dados.push({ k: c.nome, rot: c.rotulo, texto });
+  }
+
+  if (editando) {
+    return (
+      <form className="registro editando" onSubmit={salvar}>
+        <div className="registro-topo">
+          <b className="registro-titulo-form">Editando {titulo}</b>
+          <button type="button" className="fantasma" disabled={ocupado}
+                  onClick={() => { setValores(salvos); setEditando(false); setErro(null); }}>Cancelar</button>
+        </div>
+        <div className="registro-campos">
+          <Campos campos={campos} valores={valores} mudar={mudar} ocupado={ocupado} prefixo={`${tabela}-${id}`} />
+        </div>
+        <div className="acoes">
+          <button type="submit" className="primario" disabled={ocupado}>{ocupado ? 'Salvando…' : 'Salvar alterações'}</button>
+        </div>
+        <Erro texto={erro} />
+      </form>
+    );
+  }
+
+  return (
+    <article className={`registro${inativo ? ' inativo' : ''}`}>
+      <div className="registro-topo">
+        {avatar && (
+          <span className={`avatar-reg${cAvatar ? ' texto' : ''} cor-${corPor ? (cores?.[v[corPor]] || 'neutro') : 'marca'}`} aria-hidden="true">
+            {cAvatar ? mostrar(cAvatar, v[cAvatar.nome]) : iniciais(titulo)}
+          </span>
+        )}
+        <div className="registro-nome">
+          <b>{titulo}</b>
+          {cSub && mostrar(cSub, v[cSub.nome]) && <small>{mostrar(cSub, v[cSub.nome])}</small>}
+        </div>
+        {destaque}
+        <button type="button" className="icone" onClick={() => { setValores(salvos); setEditando(true); }}
+                aria-label={`Editar ${titulo}`} title="Editar">
+          <IconeEditar />
+        </button>
+      </div>
+      {(chips.length > 0 || inativo) && (
+        <div className="chips">
+          {chips.map((c) => <span key={c.k} className={`chip cor-${c.cor}`}>{c.rot}</span>)}
+        </div>
+      )}
+      {dados.length > 0 && (
+        <dl className="registro-dados">
+          {dados.map((d) => <div key={d.k}><dt>{d.rot}</dt><dd>{d.texto}</dd></div>)}
+        </dl>
+      )}
+      {children && <div className="registro-rodape">{children}</div>}
+    </article>
   );
 }
 
@@ -119,6 +250,7 @@ const ACOES_ESTOQUE = {
 // Entrada, ajuste de contagem ou perda de um produto
 export function MovimentarEstoque({ produtoId }) {
   const { ocupado, erro, rodar } = useAcao();
+  const [aberto, setAberto] = useState(false);
   const [acao, setAcao] = useState('entrada');
   const [qtd, setQtd] = useState('');
   const [custo, setCusto] = useState('');
@@ -140,8 +272,17 @@ export function MovimentarEstoque({ produtoId }) {
     const r = await rodar((sb) => sb.rpc(a.funcao, args));
     if (r.ok) {
       setFeito(`Registrado. Estoque agora: ${Number(r.data.saldo_apos).toLocaleString('pt-BR')}.`);
-      setQtd(''); setCusto(''); setMotivo('');
+      setQtd(''); setCusto(''); setMotivo(''); setAberto(false);
     }
+  }
+
+  if (!aberto) {
+    return (
+      <div className="acoes">
+        <button type="button" onClick={() => { setAberto(true); setFeito(null); }}>Entrada, ajuste ou perda</button>
+        {feito && <span className="mensagem ok">{feito}</span>}
+      </div>
+    );
   }
 
   return (
@@ -167,7 +308,10 @@ export function MovimentarEstoque({ produtoId }) {
         <input id={`motivo-${produtoId}`} value={motivo} onChange={(e) => setMotivo(e.target.value)} disabled={ocupado}
                required={acao !== 'entrada'} style={{ width: '100%' }} />
       </div>
-      <button type="submit" disabled={ocupado || qtd === ''}>{ocupado ? 'Registrando…' : 'Registrar'}</button>
+      <div className="acoes">
+        <button type="submit" className="primario" disabled={ocupado || qtd === ''}>{ocupado ? 'Registrando…' : 'Registrar'}</button>
+        <button type="button" className="fantasma" onClick={() => setAberto(false)} disabled={ocupado}>Fechar</button>
+      </div>
       {feito && <span className="mensagem ok">{feito}</span>}
       <Erro texto={erro} />
     </form>
@@ -222,42 +366,54 @@ export function NovoMembro() {
   );
 }
 
+const COR_PERFIL = { admin: 'marca', gerente: 'roxo', recepcao: 'azul', governanca: 'verde' };
+
 export function MembroEquipe({ membro, email, souEu }) {
   return (
-    <div style={{ borderBottom: '1px solid var(--borda)' }}>
-      <div className="nota" style={{ paddingBottom: 0 }}>
-        <b>{email || 'e-mail não disponível'}</b>{souEu && ' · você'}
-      </div>
-      <RegistroForm
-        tabela="perfis"
-        id={membro.id}
-        inicial={membro}
-        campos={[
-          { nome: 'nome', rotulo: 'Nome', tipo: 'texto', largo: true, obrigatorio: true },
-          { nome: 'perfil', rotulo: 'Perfil', tipo: 'select', opcoes: OPCOES_PERFIL, obrigatorio: true, bloqueado: souEu },
-          { nome: 'ativo', rotulo: 'Pode entrar no sistema', tipo: 'check', bloqueado: souEu },
-        ]}
-      />
+    <RegistroForm
+      tabela="perfis"
+      id={membro.id}
+      inicial={{ ...membro, email: email || '' }}
+      avatar
+      corPor="perfil"
+      cores={COR_PERFIL}
+      campos={[
+        { nome: 'nome', rotulo: 'Nome', tipo: 'texto', largo: true, obrigatorio: true, papel: 'titulo' },
+        { nome: 'email', rotulo: 'E-mail', tipo: 'texto', bloqueado: true, papel: 'subtitulo' },
+        { nome: 'perfil', rotulo: 'Perfil', tipo: 'select', opcoes: OPCOES_PERFIL, obrigatorio: true, bloqueado: souEu,
+          papel: 'chip', cores: COR_PERFIL },
+        { nome: 'ativo', rotulo: 'Pode entrar no sistema', tipo: 'check', bloqueado: souEu, seFalso: 'Sem acesso' },
+      ]}
+      destaque={souEu ? <span className="chip cor-marca">Você</span> : null}
+    >
       <TrocarSenha id={membro.id} />
-    </div>
+    </RegistroForm>
   );
 }
 
 function TrocarSenha({ id }) {
   const { ocupado, erro, rodar } = useAcao();
+  const [aberto, setAberto] = useState(false);
   const [senha, setSenha] = useState('');
   const [feito, setFeito] = useState(false);
+  if (!aberto) {
+    return (
+      <div className="acoes">
+        <button type="button" onClick={() => { setAberto(true); setFeito(false); }}>Trocar senha</button>
+        {feito && <span className="mensagem ok">Senha trocada</span>}
+      </div>
+    );
+  }
   return (
-    <form className="form-linha" style={{ borderBottom: 0, paddingTop: 0 }} onSubmit={async (e) => {
+    <form className="acoes" onSubmit={async (e) => {
       e.preventDefault();
-      setFeito(false);
       const r = await rodar(() => chamarEquipe('PATCH', { id, senha }));
-      if (r.ok) { setFeito(true); setSenha(''); }
+      if (r.ok) { setFeito(true); setSenha(''); setAberto(false); }
     }}>
-      <div className="campo"><label htmlFor={`senha-${id}`}>Nova senha</label>
-        <input id={`senha-${id}`} type="text" minLength={8} value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="mín. 8 caracteres" /></div>
-      <button type="submit" disabled={ocupado || senha.length < 8}>Trocar senha</button>
-      {feito && <span className="mensagem ok">Senha trocada</span>}
+      <input type="text" minLength={8} value={senha} onChange={(e) => setSenha(e.target.value)}
+             placeholder="Nova senha (mín. 8)" aria-label="Nova senha" autoFocus style={{ flex: 1, minWidth: 150 }} />
+      <button type="submit" className="primario" disabled={ocupado || senha.length < 8}>Salvar senha</button>
+      <button type="button" className="fantasma" onClick={() => setAberto(false)} disabled={ocupado}>Cancelar</button>
       <Erro texto={erro} />
     </form>
   );

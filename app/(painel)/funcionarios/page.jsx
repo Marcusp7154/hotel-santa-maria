@@ -4,6 +4,10 @@ import { contexto, SemAcesso } from './acesso';
 
 export const dynamic = 'force-dynamic';
 
+const COR_SETOR = {
+  recepcao: 'marca', limpeza: 'verde', cozinha: 'ambar', manutencao: 'azul', administracao: 'roxo', outro: 'neutro',
+};
+
 export default async function CadastroFuncionarios() {
   const { supabase, gestor } = await contexto();
   if (!gestor) return <SemAcesso />;
@@ -14,46 +18,47 @@ export default async function CadastroFuncionarios() {
   ]);
   const funcionarios = funcR.data || [];
   const campos = [
-    { nome: 'nome', rotulo: 'Nome', tipo: 'texto', obrigatorio: true, largo: true },
-    { nome: 'setor', rotulo: 'Setor', tipo: 'select', obrigatorio: true, padrao: 'recepcao', opcoes: Object.entries(SETORES) },
-    { nome: 'cargo', rotulo: 'Cargo / turno', tipo: 'texto' },
+    { nome: 'nome', rotulo: 'Nome', tipo: 'texto', obrigatorio: true, largo: true, papel: 'titulo' },
+    { nome: 'cargo', rotulo: 'Cargo / turno', tipo: 'texto', papel: 'subtitulo' },
+    { nome: 'setor', rotulo: 'Setor', tipo: 'select', obrigatorio: true, padrao: 'recepcao', opcoes: Object.entries(SETORES),
+      papel: 'chip', cores: COR_SETOR },
     { nome: 'telefone', rotulo: 'Telefone', tipo: 'texto' },
     { nome: 'admissao', rotulo: 'Admissão', tipo: 'data' },
     { nome: 'demissao', rotulo: 'Saída', tipo: 'data' },
     { nome: 'perfil_id', rotulo: 'Login no sistema', tipo: 'select', opcoes: (perfisR.data || []).map((p) => [p.id, p.nome]) },
-    { nome: 'ativo', rotulo: 'Ativo', tipo: 'check' },
+    { nome: 'ativo', rotulo: 'Ativo', tipo: 'check', seFalso: 'Inativo' },
   ];
 
   const ativos = funcionarios.filter((f) => f.ativo);
   const inativos = funcionarios.filter((f) => !f.ativo);
+  const cartao = (f) => (
+    <RegistroForm key={f.id} tabela="funcionarios" id={f.id} inicial={f} campos={campos} avatar corPor="setor" cores={COR_SETOR} />
+  );
 
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <section className="bloco">
-        <header><h2>Funcionários</h2><span className="contagem">{ativos.length} ativos</span></header>
-        <p className="nota">
-          Cadastre aqui todos que trabalham no hotel, tenham ou não acesso ao sistema. A data de admissão é usada
-          para calcular as férias. "Login no sistema" é opcional: liga a pessoa ao acesso criado em
-          Cadastros &gt; Acessos ao sistema. Quem saiu: preencha a saída e desmarque "Ativo".
-        </p>
-        <RegistroForm tabela="funcionarios" campos={campos} rotuloSalvar="Adicionar funcionário" />
-        {Object.entries(SETORES).map(([setor, nome]) => {
-          const doSetor = ativos.filter((f) => f.setor === setor);
-          if (!doSetor.length) return null;
-          return (
-            <div key={setor}>
-              <div className="subtitulo">{nome} · {doSetor.length}</div>
-              {doSetor.map((f) => <RegistroForm key={f.id} tabela="funcionarios" id={f.id} inicial={f} campos={campos} />)}
-            </div>
-          );
-        })}
-        {inativos.length > 0 && (
-          <div>
-            <div className="subtitulo">Inativos · {inativos.length}</div>
-            {inativos.map((f) => <RegistroForm key={f.id} tabela="funcionarios" id={f.id} inicial={f} campos={campos} />)}
+    <section className="bloco">
+      <header><h2>Funcionários</h2><span className="contagem">{ativos.length} {ativos.length === 1 ? 'ativo' : 'ativos'}</span></header>
+      <p className="nota">
+        Todos que trabalham no hotel, com ou sem acesso ao sistema. A data de admissão calcula as férias.
+        Quem saiu: edite, preencha a saída e desmarque "Ativo".
+      </p>
+      <RegistroForm tabela="funcionarios" campos={campos} rotuloNovo="Novo funcionário" rotuloSalvar="Adicionar funcionário" />
+      {Object.entries(SETORES).map(([setor, nome]) => {
+        const doSetor = ativos.filter((f) => f.setor === setor);
+        if (!doSetor.length) return null;
+        return (
+          <div key={setor}>
+            <div className="subtitulo"><span className={`ponto cor-${COR_SETOR[setor]}`} />{nome} · {doSetor.length}</div>
+            <div className="registros">{doSetor.map(cartao)}</div>
           </div>
-        )}
-      </section>
-    </div>
+        );
+      })}
+      {inativos.length > 0 && (
+        <div>
+          <div className="subtitulo">Inativos · {inativos.length}</div>
+          <div className="registros">{inativos.map(cartao)}</div>
+        </div>
+      )}
+    </section>
   );
 }

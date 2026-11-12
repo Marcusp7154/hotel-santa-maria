@@ -9,8 +9,8 @@ import { CancelarDespesa } from '../componentes';
 export const dynamic = 'force-dynamic';
 
 const CAMPOS_CATEGORIA = [
-  { nome: 'nome', rotulo: 'Categoria', tipo: 'texto', obrigatorio: true, largo: true },
-  { nome: 'ativo', rotulo: 'Em uso', tipo: 'check' },
+  { nome: 'nome', rotulo: 'Categoria', tipo: 'texto', obrigatorio: true, largo: true, papel: 'titulo' },
+  { nome: 'ativo', rotulo: 'Em uso', tipo: 'check', seFalso: 'Fora de uso' },
 ];
 
 export default async function Despesas({ searchParams }) {
@@ -125,9 +125,12 @@ export default async function Despesas({ searchParams }) {
         <section className="bloco">
           <header><h2>Categorias de despesa</h2><span className="contagem">{categorias.length}</span></header>
           <p className="nota">Crie as categorias que fazem sentido para o hotel. Categoria fora de uso some do formulário, mas as despesas antigas continuam nos relatórios.</p>
-          <RegistroForm tabela="categorias_despesa" campos={CAMPOS_CATEGORIA} rotuloSalvar="Adicionar categoria" />
-          {categorias.length > 0 && <div className="subtitulo">Categorias cadastradas</div>}
-          {categorias.map((c) => <RegistroForm key={c.id} tabela="categorias_despesa" id={c.id} inicial={c} campos={CAMPOS_CATEGORIA} />)}
+          <RegistroForm tabela="categorias_despesa" campos={CAMPOS_CATEGORIA} rotuloNovo="Nova categoria" rotuloSalvar="Adicionar categoria" />
+          {categorias.length > 0 && (
+            <div className="registros">
+              {categorias.map((c) => <RegistroForm key={c.id} tabela="categorias_despesa" id={c.id} inicial={c} campos={CAMPOS_CATEGORIA} />)}
+            </div>
+          )}
         </section>
       )}
     </div>

@@ -312,6 +312,94 @@ input[type='checkbox'] { accent-color: var(--marca); width: 16px; height: 16px; 
 .nota { margin: 0; padding: 11px 16px; font-size: 13px; color: var(--texto-2); }
 
 /* ---------------------------------------------------------------------
+   Cadastros em cartão (funcionários, quartos, produtos, acessos...)
+   --------------------------------------------------------------------- */
+:root {
+  --c-marca: var(--marca); --c-verde: #0b7a6c; --c-ambar: #b45309; --c-azul: #1d4ed8;
+  --c-roxo: #6d28d9; --c-neutro: #5e6370; --c-ok: var(--ok);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --c-verde: #4fd1be; --c-ambar: #f0a94b; --c-azul: #8fb0ff; --c-roxo: #c4a7ff; --c-neutro: #a0a5b0; }
+}
+
+.registros { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; padding: 16px; }
+.registro {
+  position: relative; display: grid; gap: 12px; align-content: start;
+  padding: 16px; border-radius: 16px;
+  background: var(--superficie); border: 1px solid var(--borda);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.registro:hover { border-color: var(--borda-forte); box-shadow: 0 6px 18px -12px rgba(74, 10, 20, 0.35); }
+.registro.inativo { opacity: 0.62; }
+.registro.editando { grid-column: 1 / -1; border-color: var(--marca); box-shadow: 0 0 0 3px var(--marca-suave); }
+.registro-topo { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.registro-nome { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+.registro-nome b { font: 700 17px/1.2 var(--fonte-titulo); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.registro-nome small { font-size: 13px; color: var(--texto-2); margin-top: 2px; overflow-wrap: anywhere; }
+.registro-titulo-form { font: 700 17px/1.2 var(--fonte-titulo); flex: 1; }
+.registro-campos { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.registro-campos .campo.largo { flex: 1; min-width: 200px; }
+.registro-campos .campo.largo input { width: 100%; }
+.registro-campos .campo input:not([type='number']):not([type='checkbox']), .registro-campos .campo select { min-width: 150px; }
+.registro-dados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.registro-dados div { min-width: 0; }
+.registro-dados dt { font-size: 12px; color: var(--texto-2); }
+.registro-dados dd { margin: 1px 0 0; font-weight: 650; overflow-wrap: anywhere; }
+.registro-rodape { padding-top: 12px; border-top: 1px dashed var(--borda); display: grid; gap: 8px; }
+.registro-rodape .movimento-estoque { padding: 0; }
+
+.avatar-reg {
+  display: inline-grid; place-items: center; flex: none;
+  width: 48px; height: 48px; border-radius: 14px;
+  color: #fff; font: 800 17px/1 var(--fonte-titulo); letter-spacing: -0.02em;
+  background: #c8102e;
+}
+.avatar-reg.texto { font-size: 19px; min-width: 48px; width: auto; padding: 0 8px; }
+/* cor do quadrado de iniciais (a tela escolhe: setor do funcionário, perfil de acesso...) */
+.avatar-reg.cor-marca, .ponto.cor-marca { background: #c8102e; }
+.avatar-reg.cor-verde, .ponto.cor-verde { background: #0e8a7b; }
+.avatar-reg.cor-ambar, .ponto.cor-ambar { background: #d97706; }
+.avatar-reg.cor-azul, .ponto.cor-azul { background: #2563eb; }
+.avatar-reg.cor-roxo, .ponto.cor-roxo { background: #7c3aed; }
+.avatar-reg.cor-neutro, .ponto.cor-neutro { background: #64748b; }
+.ponto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.chip.cor-marca  { color: var(--c-marca);  background: color-mix(in srgb, var(--c-marca) 12%, var(--superficie)); }
+.chip.cor-verde  { color: var(--c-verde);  background: color-mix(in srgb, var(--c-verde) 13%, var(--superficie)); }
+.chip.cor-ambar  { color: var(--c-ambar);  background: color-mix(in srgb, var(--c-ambar) 14%, var(--superficie)); }
+.chip.cor-azul   { color: var(--c-azul);   background: color-mix(in srgb, var(--c-azul) 12%, var(--superficie)); }
+.chip.cor-roxo   { color: var(--c-roxo);   background: color-mix(in srgb, var(--c-roxo) 13%, var(--superficie)); }
+.chip.cor-ok     { color: var(--c-ok);     background: color-mix(in srgb, var(--c-ok) 13%, var(--superficie)); }
+.chip.cor-neutro { color: var(--c-neutro); background: var(--neutro-suave); }
+
+.novo-area { padding: 16px; display: grid; gap: 8px; }
+.novo-area + .registros { padding-top: 0; }
+button.novo-registro {
+  width: 100%; padding: 14px; border-radius: 16px;
+  border: 2px dashed color-mix(in srgb, var(--marca) 45%, var(--borda));
+  background: var(--marca-tinta); color: var(--marca); font-size: 15px; font-weight: 750;
+}
+button.novo-registro span { font-size: 20px; line-height: 1; }
+button.novo-registro:hover { background: var(--marca-suave); border-color: var(--marca); }
+button.icone {
+  flex: none; width: 36px; height: 36px; padding: 0; border-radius: 10px;
+  color: var(--texto-2); background: var(--superficie-2); border-color: transparent;
+}
+button.icone:hover { color: var(--marca); background: var(--marca-suave); }
+button.fantasma { background: transparent; border-color: transparent; color: var(--texto-2); }
+button.fantasma:hover { background: var(--superficie-2); color: var(--texto); }
+
+.estoque-selo {
+  display: grid; justify-items: center; flex: none; min-width: 64px; padding: 5px 10px; border-radius: 12px;
+  background: color-mix(in srgb, var(--c-verde) 12%, var(--superficie)); color: var(--c-verde); line-height: 1.1;
+}
+.estoque-selo b { font: 800 20px/1.1 var(--fonte-titulo); }
+.estoque-selo small { font-size: 11px; color: inherit; font-weight: 650; }
+.estoque-selo.baixo { background: var(--erro-suave); color: var(--erro); }
+
+/* ---------------------------------------------------------------------
    Escala
    --------------------------------------------------------------------- */
 .escala-rolagem { overflow-x: auto; background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); }

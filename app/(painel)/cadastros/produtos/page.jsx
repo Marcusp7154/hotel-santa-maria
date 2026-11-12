@@ -4,15 +4,16 @@ import { MovimentarEstoque, RegistroForm } from '../formularios';
 export const dynamic = 'force-dynamic';
 
 const CAMPOS = [
-  { nome: 'nome', rotulo: 'Produto', tipo: 'texto', obrigatorio: true, largo: true },
+  { nome: 'nome', rotulo: 'Produto', tipo: 'texto', obrigatorio: true, largo: true, papel: 'titulo' },
   {
-    nome: 'categoria', rotulo: 'Categoria', tipo: 'select', obrigatorio: true, padrao: 'frigobar',
+    nome: 'categoria', rotulo: 'Categoria', tipo: 'select', obrigatorio: true, padrao: 'frigobar', papel: 'chip',
     opcoes: [['frigobar', 'Frigobar'], ['restaurante', 'Restaurante'], ['lavanderia', 'Lavanderia'], ['servico', 'Serviço'], ['outro', 'Outro']],
+    cores: { frigobar: 'azul', restaurante: 'ambar', lavanderia: 'verde', servico: 'roxo', outro: 'neutro' },
   },
-  { nome: 'preco', rotulo: 'Preço de venda (R$)', tipo: 'numero', obrigatorio: true },
+  { nome: 'preco', rotulo: 'Preço de venda', tipo: 'numero', obrigatorio: true, moeda: true },
   { nome: 'estoque_minimo', rotulo: 'Estoque mínimo', tipo: 'numero', passo: '1', padrao: 0 },
-  { nome: 'controla_estoque', rotulo: 'Controlar estoque', tipo: 'check' },
-  { nome: 'ativo', rotulo: 'À venda', tipo: 'check' },
+  { nome: 'controla_estoque', rotulo: 'Controlar estoque', tipo: 'check', seFalso: 'Sem controle de estoque' },
+  { nome: 'ativo', rotulo: 'À venda', tipo: 'check', seFalso: 'Fora de venda' },
 ];
 
 const NOME_MOV = {
@@ -53,27 +54,26 @@ export default async function CadastroProdutos() {
           O estoque baixa sozinho a cada venda e volta se a venda for estornada.
           Mudar o preço vale só para as próximas vendas.
         </p>
-        <RegistroForm tabela="produtos" campos={CAMPOS} rotuloSalvar="Adicionar produto" />
-        {produtos.length > 0 && <div className="subtitulo">Produtos cadastrados</div>}
-        {produtos.map((p) => {
-          const baixo = p.controla_estoque && Number(p.estoque_atual) <= Number(p.estoque_minimo);
-          return (
-            <div className="produto-bloco" key={p.id}>
-              <div className="cabeca-produto">
-                <b>{p.nome}</b>
-                {p.controla_estoque ? (
-                  <span className={`estoque${baixo ? ' baixo' : ''}`}>
-                    Em estoque: {qtd(p.estoque_atual)}{baixo ? ' · abaixo do mínimo' : ''}
-                  </span>
-                ) : (
-                  <small>Sem controle de estoque</small>
-                )}
-              </div>
-              <RegistroForm tabela="produtos" id={p.id} inicial={p} campos={CAMPOS} />
-              {p.controla_estoque && <MovimentarEstoque produtoId={p.id} />}
-            </div>
-          );
-        })}
+        <RegistroForm tabela="produtos" campos={CAMPOS} rotuloNovo="Novo produto" rotuloSalvar="Adicionar produto" />
+        {produtos.length > 0 && (
+          <div className="registros">
+            {produtos.map((p) => {
+              const baixo = p.controla_estoque && Number(p.estoque_atual) <= Number(p.estoque_minimo);
+              return (
+                <RegistroForm
+                  key={p.id} tabela="produtos" id={p.id} inicial={p} campos={CAMPOS}
+                  destaque={p.controla_estoque ? (
+                    <span className={`estoque-selo${baixo ? ' baixo' : ''}`} title={baixo ? 'Abaixo do mínimo' : 'Em estoque'}>
+                      <b>{qtd(p.estoque_atual)}</b><small>{baixo ? 'baixo' : 'em estoque'}</small>
+                    </span>
+                  ) : null}
+                >
+                  {p.controla_estoque ? <MovimentarEstoque produtoId={p.id} /> : null}
+                </RegistroForm>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="bloco">

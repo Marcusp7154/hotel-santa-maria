@@ -43,7 +43,9 @@ export default async function CadastroEquipe() {
       <section className="bloco">
         <header><h2>Quem tem acesso</h2><span className="contagem">{equipe.length}</span></header>
         <p className="nota">Quem não deve mais entrar: desmarque "Pode entrar no sistema". O histórico do que a pessoa fez continua guardado. Salário, escala e férias ficam no menu Funcionários.</p>
-        {equipe.map((m) => <MembroEquipe key={m.id} membro={m} email={emails[m.id]} souEu={m.id === user.id} />)}
+        <div className="registros">
+          {equipe.map((m) => <MembroEquipe key={m.id} membro={m} email={emails[m.id]} souEu={m.id === user.id} />)}
+        </div>
       </section>
     </div>
   );
