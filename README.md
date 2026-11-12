@@ -34,6 +34,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
    até você marcar "Controlar estoque" e lançar a entrada.
 4. `banco/hotel_fase1d.sql`: funcionários, escala, faltas e atestados, férias e salários.
 5. `banco/hotel_fase1e.sql`: despesas do dia a dia lançadas no caixa.
+6. `banco/hotel_fase1f.sql`: só um caixa aberto por vez no hotel.
 
 ## Publicar na Vercel
 

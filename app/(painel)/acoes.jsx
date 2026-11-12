@@ -11,6 +11,7 @@ const ERROS = [
   ['um_desconto_por_ocorrencia', 'Esta ocorrência já foi descontada.'],
   ['um_estorno_por_pagamento', 'Este pagamento já foi estornado.'],
   ['um_turno_aberto_por_usuario', 'Você já tem um caixa aberto.'],
+  ['um_turno_aberto_por_hotel', 'Já existe um caixa aberto. Ele precisa ser fechado antes de abrir outro.'],
   ['categorias_despesa_hotel_id_nome_key', 'Já existe uma categoria com este nome.'],
   ['ferias_sem_sobreposicao', 'Já existem férias registradas nesse período.'],
   ['escala_excecoes_funcionario_id_data_key', 'Já existe uma troca para este dia.'],
@@ -241,11 +242,36 @@ export function StatusQuarto({ quartoId, status }) {
   );
 }
 
-export function Caixa({ turno, resumo }) {
+function horaCurta(ts) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
+  }).format(new Date(ts)).replace(',', ' às');
+}
+
+// outro: caixa aberto por outra pessoa (só pode haver um aberto por vez)
+export function Caixa({ turno, resumo, outro, gestor }) {
   const { ocupado, erro, rodar } = useAcao();
   const [abertura, setAbertura] = useState('0');
   const [contado, setContado] = useState('');
   const [fechado, setFechado] = useState(null);
+
+  if (!turno && outro) {
+    return (
+      <div className="cartao">
+        {fechado && (
+          <div className={`mensagem ${Number(fechado.diferenca) === 0 ? 'ok' : 'aviso'}`}>
+            Turno fechado. Esperado {brl(fechado.valor_esperado)}, contado {brl(fechado.valor_contado)},
+            diferença {brl(fechado.diferenca)}.
+          </div>
+        )}
+        <div className="mensagem aviso">
+          O caixa de <b>{outro.nome}</b> está aberto desde {horaCurta(outro.aberto_em)}. Só um caixa fica aberto
+          por vez: ele precisa ser fechado antes de você abrir o seu.
+          {gestor && ' Pela gerência, você pode fechá-lo no menu Caixa, em "Caixa aberto agora".'}
+        </div>
+      </div>
+    );
+  }
 
   if (!turno) {
     return (

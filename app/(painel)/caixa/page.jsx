@@ -22,15 +22,17 @@ export default async function PaginaCaixa({ searchParams }) {
   const inicioMes = `${mes}-01T00:00:00-03:00`;
   const fimMes = `${somarMes(mes, 1)}-01T00:00:00-03:00`;
 
-  const [meuR, abertosR, histR, perfisR] = await Promise.all([
+  const [meuR, abertosR, histR, perfisR, abertoR] = await Promise.all([
     supabase.from('turnos_caixa').select('*').eq('usuario_id', user.id).is('fechado_em', null).maybeSingle(),
     gestor ? supabase.from('turnos_caixa').select('*').is('fechado_em', null).neq('usuario_id', user.id).order('aberto_em')
            : { data: [] },
     supabase.from('turnos_caixa').select('*').not('fechado_em', 'is', null)
       .gte('aberto_em', inicioMes).lt('aberto_em', fimMes).order('aberto_em', { ascending: false }),
     supabase.from('perfis').select('id, nome'),
+    supabase.rpc('fn_caixa_aberto'),
   ]);
   const meu = meuR.data;
+  const outroAberto = (abertoR.data || []).find((c) => c.usuario_id !== user.id);
   const abertos = abertosR.data || [];
   const historico = histR.data || [];
   const nomeDe = Object.fromEntries((perfisR.data || []).map((p) => [p.id, p.nome]));
@@ -76,7 +78,7 @@ export default async function PaginaCaixa({ searchParams }) {
       <div className="colunas" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))' }}>
         <section className="bloco">
           <header><h2>Meu caixa</h2>{meu && <span className="etiqueta limpo">Aberto às {horaDe(meu.aberto_em)}</span>}</header>
-          <Caixa turno={meu} resumo={resumoR.data || []} />
+          <Caixa turno={meu} resumo={resumoR.data || []} outro={outroAberto} gestor={gestor} />
         </section>
 
         {meu && (
@@ -140,7 +142,7 @@ export default async function PaginaCaixa({ searchParams }) {
 
       {gestor && abertos.length > 0 && (
         <section className="bloco" style={{ marginTop: 16 }}>
-          <header><h2>Outros caixas abertos agora</h2><span className="contagem">{abertos.length}</span></header>
+          <header><h2>Caixa aberto agora</h2><span className="contagem">{abertos.length}</span></header>
           {abertos.map((t) => {
             const r = resumo(t);
             return (

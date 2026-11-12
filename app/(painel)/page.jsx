@@ -32,7 +32,7 @@ export default async function Hoje() {
   ]);
   const financeiro = ['admin', 'gerente', 'recepcao'].includes(perfil?.perfil);
 
-  const [chegadasR, hospedadosR, quartosR, relatorioR, saldosR, produtosR, turnoR] = await Promise.all([
+  const [chegadasR, hospedadosR, quartosR, relatorioR, saldosR, produtosR, turnoR, abertoR] = await Promise.all([
     supabase.from('reservas').select(CAMPOS_RESERVA)
       .in('status', ['pre_reserva', 'confirmada']).lte('data_checkin', hoje).order('data_checkin'),
     supabase.from('reservas').select(CAMPOS_RESERVA)
@@ -42,6 +42,7 @@ export default async function Hoje() {
     financeiro ? supabase.from('v_contas_saldo').select('conta_id, reserva_id, saldo').eq('status', 'aberta') : { data: [] },
     financeiro ? supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome') : { data: [] },
     financeiro ? supabase.from('turnos_caixa').select('id, aberto_em').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle() : { data: null },
+    financeiro ? supabase.rpc('fn_caixa_aberto') : { data: [] },
   ]);
 
   const chegadas = chegadasR.data || [];
@@ -174,7 +175,8 @@ export default async function Hoje() {
                 <Link href="/caixa">Ver caixa completo</Link>
               </span>
             </header>
-            <Caixa turno={turno} resumo={resumoTurno} />
+            <Caixa turno={turno} resumo={resumoTurno} gestor={['admin', 'gerente'].includes(perfil?.perfil)}
+                   outro={(abertoR.data || []).find((c) => c.usuario_id !== user.id)} />
           </section>
         )}
       </div>
