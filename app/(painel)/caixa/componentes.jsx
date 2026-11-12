@@ -71,14 +71,21 @@ export function LancarDespesa({ categorias, temTurno }) {
         <input id="dp-valor" type="number" step="0.01" min="0.01" value={v.valor} onChange={(e) => mudar('valor', e.target.value)} disabled={ocupado} /></div>
       <div className="campo"><label htmlFor="dp-forma">Pago com</label>
         <select id="dp-forma" value={v.forma} onChange={(e) => mudar('forma', e.target.value)} disabled={ocupado}>
-          {temTurno && <option value="dinheiro">Dinheiro do caixa</option>}
+          <option value="dinheiro" disabled={!temTurno}>
+            {temTurno ? 'Dinheiro do caixa' : 'Dinheiro do caixa (abra seu caixa primeiro)'}
+          </option>
           <option value="pix">Pix</option>
           <option value="debito">Cartão de débito</option>
           <option value="credito">Cartão de crédito</option>
           <option value="transferencia">Transferência</option>
         </select></div>
       <button type="submit" className="primario" disabled={ocupado}>{ocupado ? 'Lançando…' : 'Lançar despesa'}</button>
-      {!temTurno && <small>Para pagar com dinheiro da gaveta, abra seu caixa.</small>}
+      {!temTurno && (
+        <span className="mensagem aviso">
+          Seu caixa está fechado: só dá para lançar despesa paga no Pix ou cartão. Para pagar com dinheiro
+          da gaveta, abra o caixa em "Meu caixa", no topo desta página.
+        </span>
+      )}
       {feito && <span className="mensagem ok">Lançado: {feito}</span>}
       <Erro texto={erro} />
     </form>
