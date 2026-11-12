@@ -5,7 +5,8 @@ import { horaDe, quando, resumirTurno, FORMAS } from '@/lib/caixa';
 import { mesValido, nomeMes, somarMes } from '@/lib/rh';
 import { contexto, SemAcesso } from '../funcionarios/acesso';
 import { SeletorMes } from '../funcionarios/seletor-mes';
-import { CancelarDespesa, EstornarPagamento, FecharTurnoDeOutro, LancarDespesa } from './componentes';
+import { FecharTurnoDeOutro, LancarDespesa } from './componentes';
+import { MovimentoTurno } from './movimento';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,33 @@ export default async function PaginaCaixa({ searchParams }) {
   const minhasDesps = meu ? doTurno(meu).desps : [];
   const estornados = new Set(pagamentos.filter((p) => p.estorno_de).map((p) => p.estorno_de));
 
+  // Tudo do meu turno numa lista só, mais recente primeiro
+  const itensTurno = [
+    ...meusPags.map((p) => {
+      const estornado = estornados.has(p.id);
+      return {
+        id: p.id, em: p.criado_em, tipo: 'recebido', valor: Number(p.valor), sinal: Number(p.valor) < 0 ? -1 : 1,
+        titulo: p.estorno_de ? `Estorno · ${p.contas?.titular || ''}` : (p.contas?.titular || 'Pagamento'),
+        sub: [p.contas?.reservas?.codigo, NOME_FORMA[p.forma], p.motivo].filter(Boolean).join(' · '),
+        etiqueta: estornado ? 'estornado' : null, cancelado: estornado,
+        pagamento: !p.estorno_de && !estornado ? p : null,
+      };
+    }),
+    ...minhasDesps.map((d) => ({
+      id: d.id, em: d.criado_em, tipo: 'despesa', valor: Number(d.valor), sinal: -1,
+      titulo: d.descricao,
+      sub: [d.categorias_despesa?.nome, d.fornecedor, d.cancelada_em ? `cancelada: ${d.motivo_cancelamento}` : null]
+        .filter(Boolean).join(' · '),
+      etiqueta: d.cancelada_em ? 'cancelada' : (d.forma !== 'dinheiro' ? `${NOME_FORMA[d.forma]}, fora da gaveta` : null),
+      cancelado: Boolean(d.cancelada_em),
+      despesa: d.cancelada_em ? null : { id: d.id },
+    })),
+    ...meusMovs.map((m) => ({
+      id: m.id, em: m.criado_em, tipo: 'troco', valor: Number(m.valor), sinal: m.tipo === 'sangria' ? -1 : 1,
+      titulo: m.tipo === 'sangria' ? 'Sangria' : 'Reforço de troco', sub: m.motivo || '',
+    })),
+  ].sort((a, b) => (a.em < b.em ? 1 : -1)).map((i) => ({ ...i, hora: horaDe(i.em) }));
+
   const totalMes = Object.fromEntries(FORMAS.map((f) => [f, 0]));
   let diferencaMes = 0;
   let despesaDinheiroMes = 0;
@@ -83,47 +111,8 @@ export default async function PaginaCaixa({ searchParams }) {
 
         {meu && (
           <section className="bloco">
-            <header><h2>Movimento do meu turno</h2><span className="contagem">{meusPags.length + meusMovs.length + minhasDesps.length}</span></header>
-            {meusPags.length + meusMovs.length + minhasDesps.length === 0 && <div className="vazio">Nada lançado ainda neste turno.</div>}
-            {meusPags.map((p) => (
-              <div className="cartao" key={p.id}>
-                <div className="linha">
-                  <span>
-                    <b>{p.contas?.titular}</b>
-                    <small className="fraco"> · {p.contas?.reservas?.codigo} · {horaDe(p.criado_em)}</small>
-                  </span>
-                  <span className={`saldo${Number(p.valor) < 0 ? ' deve' : ''}`}>{NOME_FORMA[p.forma]} {brl(p.valor)}</span>
-                </div>
-                {p.estorno_de && <div className="detalhe">Estorno: {p.motivo}</div>}
-                {!p.estorno_de && (estornados.has(p.id)
-                  ? <span className="etiqueta finalizada">Estornado</span>
-                  : <EstornarPagamento pagamento={p} temTurno />)}
-              </div>
-            ))}
-            {minhasDesps.map((d) => (
-              <div className="cartao" key={d.id}>
-                <div className="linha">
-                  <span>
-                    <b>Despesa · {d.descricao}</b>
-                    <small className="fraco"> · {d.categorias_despesa?.nome}{d.fornecedor ? ` · ${d.fornecedor}` : ''} · {horaDe(d.criado_em)}</small>
-                  </span>
-                  <span className={`saldo${d.cancelada_em ? ' fraco' : ''}`}>
-                    {d.forma === 'dinheiro' ? '− ' : ''}{brl(d.valor)} {d.forma !== 'dinheiro' && <small>({NOME_FORMA[d.forma]})</small>}
-                  </span>
-                </div>
-                {d.cancelada_em
-                  ? <div className="detalhe">Cancelada: {d.motivo_cancelamento}</div>
-                  : <CancelarDespesa despesa={d} />}
-              </div>
-            ))}
-            {meusMovs.map((m) => (
-              <div className="cartao" key={m.id}>
-                <div className="linha">
-                  <span><b>{m.tipo === 'sangria' ? 'Sangria' : 'Reforço de troco'}</b><small className="fraco"> · {m.motivo} · {horaDe(m.criado_em)}</small></span>
-                  <span className="saldo">{m.tipo === 'sangria' ? '− ' : ''}{brl(m.valor)}</span>
-                </div>
-              </div>
-            ))}
+            <header><h2>Movimento do meu turno</h2></header>
+            <MovimentoTurno itens={itensTurno} turnoId={meu.id} />
           </section>
         )}
       </div>

@@ -564,3 +564,47 @@ details.recolhivel[open] > summary .seta { transform: rotate(-135deg) translate(
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ---------------------------------------------------------------------
+   Movimento do turno (lista compacta com filtro)
+   --------------------------------------------------------------------- */
+.mov-resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--borda); border-bottom: 1px solid var(--borda); }
+.mov-resumo > span { background: var(--superficie); padding: 10px 16px; display: grid; gap: 1px; }
+.mov-resumo small { color: var(--texto-2); font-size: 12px; font-weight: 600; }
+.mov-resumo b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.mov .positivo { color: var(--ok); }
+.mov .negativo { color: var(--erro); }
+.mov-filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--borda); }
+.segmentos { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--superficie-2); flex-wrap: wrap; }
+.segmentos button { border: 0; background: transparent; padding: 5px 10px; border-radius: 8px; font-size: 13px; font-weight: 650; color: var(--texto-2); min-height: 0; box-shadow: none; }
+.segmentos button:hover { color: var(--texto); }
+.segmentos button.ativo { background: var(--superficie); color: var(--texto); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
+.segmentos .n { font-variant-numeric: tabular-nums; color: var(--texto-3, var(--texto-2)); font-weight: 600; margin-left: 2px; }
+.segmentos button.ativo .n { color: var(--marca); }
+.mov-busca { flex: 1 1 160px; min-width: 0; padding: 6px 10px; font-size: 14px; }
+.mov-lista { list-style: none; margin: 0; padding: 0; max-height: 440px; overflow-y: auto; }
+.mov-item { border-bottom: 1px solid var(--borda); }
+.mov-item:last-child { border-bottom: 0; }
+.mov-linha {
+  all: unset; box-sizing: border-box; width: 100%; cursor: pointer;
+  display: grid; grid-template-columns: 42px 8px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 8px 16px;
+}
+.mov-linha:disabled { cursor: default; }
+.mov-linha:not(:disabled):hover, .mov-item.aberto .mov-linha { background: var(--superficie-2); }
+.mov-linha:focus-visible { outline: 2px solid var(--marca); outline-offset: -2px; }
+.mov-hora { font-size: 13px; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.mov-ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--texto-2); }
+.mov-ponto.recebido { background: var(--ok); }
+.mov-ponto.despesa { background: var(--erro); }
+.mov-ponto.troco { background: var(--noite, #3b5bdb); }
+.mov-texto { display: grid; min-width: 0; }
+.mov-texto b, .mov-texto small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mov-texto b { font-weight: 650; font-size: 14px; }
+.mov-texto small { color: var(--texto-2); font-size: 12px; }
+.mov-valor { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; display: grid; white-space: nowrap; }
+.mov-valor small { font-weight: 600; font-size: 11px; color: var(--texto-2); }
+.mov-item.riscado .mov-texto b, .mov-item.riscado .mov-num { text-decoration: line-through; opacity: 0.55; }
+.mov-acao { padding: 4px 16px 12px 76px; background: var(--superficie-2); }
+.mov-rodape { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--borda); font-size: 14px; }
+@media (max-width: 640px) { .mov-acao { padding-left: 16px; } }
