@@ -86,7 +86,7 @@ export default async function Notinha({ params }) {
     <>
       <div className="cabecalho nao-imprimir">
         <div>
-          <Link href={reserva ? `/reservas/${reserva.id}` : '/'}>← {reserva ? `Reserva ${reserva.codigo}` : 'Voltar para Hoje'}</Link>
+          <Link href={reserva ? `/reservas/${reserva.id}` : '/caixa/vender'}>← {reserva ? `Reserva ${reserva.codigo}` : 'Vender'}</Link>
         </div>
         <div className="acoes"><BotaoImprimir /></div>
       </div>

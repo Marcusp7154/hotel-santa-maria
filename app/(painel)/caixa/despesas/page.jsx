@@ -4,7 +4,7 @@ import { dataBR, mesValido, nomeMes, primeiroDia, ultimoDia } from '@/lib/rh';
 import { RegistroForm } from '../../cadastros/formularios';
 import { contexto, SemAcesso } from '../../funcionarios/acesso';
 import { SeletorMes } from '../../funcionarios/seletor-mes';
-import { CancelarDespesa } from '../componentes';
+import { AbasCaixa, CancelarDespesa } from '../componentes';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,12 +51,12 @@ export default async function Despesas({ searchParams }) {
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
-      <div className="cabecalho" style={{ marginBottom: 0 }}>
-        <div>
-          <Link href="/caixa">← Caixa</Link>
-          <h1 style={{ marginTop: 6 }}>{gestor ? 'Despesas' : 'Minhas despesas'}</h1>
+      <div>
+        <div className="cabecalho" style={{ marginBottom: 16 }}>
+          <h1>Caixa</h1>
+          <SeletorMes base="/caixa/despesas" mes={mes} extra={extra} />
         </div>
-        <SeletorMes base="/caixa/despesas" mes={mes} extra={extra} />
+        <AbasCaixa />
       </div>
 
       <section className="indicadores" style={{ marginBottom: 0 }}>

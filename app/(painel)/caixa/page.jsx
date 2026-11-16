@@ -5,7 +5,7 @@ import { horaDe, quando, resumirTurno, FORMAS } from '@/lib/caixa';
 import { mesValido, nomeMes, somarMes } from '@/lib/rh';
 import { contexto, SemAcesso } from '../funcionarios/acesso';
 import { SeletorMes } from '../funcionarios/seletor-mes';
-import { FecharTurnoDeOutro, LancarDespesa } from './componentes';
+import { AbasCaixa, FecharTurnoDeOutro, LancarDespesa } from './componentes';
 import { MovimentoTurno } from './movimento';
 
 export const dynamic = 'force-dynamic';
@@ -68,9 +68,9 @@ export default async function PaginaCaixa({ searchParams }) {
       return {
         id: p.id, em: p.criado_em, tipo: 'recebido', valor: Number(p.valor), sinal: Number(p.valor) < 0 ? -1 : 1,
         titulo: p.estorno_de ? `Estorno · ${p.contas?.titular || ''}` : (p.contas?.titular || 'Pagamento'),
-        sub: [p.contas?.reservas?.codigo, NOME_FORMA[p.forma], p.motivo].filter(Boolean).join(' · '),
+        sub: [!p.contas?.reservas ? 'venda no balcão' : p.contas?.reservas?.codigo, NOME_FORMA[p.forma], p.motivo].filter(Boolean).join(' · '),
         etiqueta: estornado ? 'estornado' : null, cancelado: estornado,
-        pagamento: !p.estorno_de && !estornado ? p : null,
+        pagamento: !p.estorno_de && !estornado && p.contas?.reservas ? p : null,
       };
     }),
     ...minhasDesps.map((d) => ({
@@ -101,7 +101,11 @@ export default async function PaginaCaixa({ searchParams }) {
 
   return (
     <>
-      <div className="cabecalho"><h1>Caixa</h1></div>
+      <div className="cabecalho">
+        <h1>Caixa</h1>
+        <Link href="/caixa/vender" className="botao primario">+ Vender</Link>
+      </div>
+      <AbasCaixa />
 
       <div className="colunas" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))' }}>
         <section className="bloco">

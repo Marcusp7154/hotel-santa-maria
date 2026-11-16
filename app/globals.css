@@ -867,3 +867,61 @@ details.periodos .tabela { font-size: 13px; }
   .rt-tabela tr.rt-diferenca td, .rt-tabela tr.rt-diferenca.faltou td { color: #000; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ---------------------------------------------------------------------
+   Caixa > Vender (venda direta no balcão)
+   --------------------------------------------------------------------- */
+.pdv { display: grid; grid-template-columns: minmax(0, 1fr) 360px; }
+.pdv-produtos { padding: 16px; display: grid; gap: 12px; align-content: start; }
+.pdv-busca { width: 100%; padding: 10px 12px; background: var(--superficie-2); }
+.pdv-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.pdv-prod {
+  all: unset; box-sizing: border-box; cursor: pointer; position: relative;
+  display: grid; gap: 4px; align-content: start; min-height: 96px; padding: 12px;
+  border-radius: 12px; border: 1.5px solid var(--borda-forte); background: var(--superficie);
+  transition: border-color 0.12s, transform 0.06s;
+}
+.pdv-prod:hover { border-color: var(--marca); }
+.pdv-prod:active { transform: scale(0.98); }
+.pdv-prod:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+.pdv-prod:disabled { opacity: 0.45; cursor: not-allowed; }
+.pdv-prod b { font-weight: 700; line-height: 1.25; padding-right: 26px; }
+.pdv-prod .pdv-preco { font: 800 18px/1.1 var(--fonte-titulo); color: var(--marca); }
+.pdv-prod small { font-size: 12px; color: var(--texto-2); }
+.pdv-prod small.pouco { color: #b45309; font-weight: 700; }
+.pdv-prod.no-carrinho { border-color: var(--marca); background: var(--marca-tinta); box-shadow: 0 0 0 3px var(--marca-suave); }
+.pdv-qtd {
+  position: absolute; top: 8px; right: 8px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px;
+  background: var(--marca); color: var(--sobre-marca); font-weight: 800; font-size: 13px; display: grid; place-items: center;
+}
+.pdv-carrinho {
+  border-left: 1px solid var(--borda); padding: 16px; display: grid; gap: 12px; align-content: start;
+  background: var(--superficie-2); border-radius: 0 var(--raio) var(--raio) 0;
+}
+.pdv-carrinho h2 { margin: 0; font: 700 18px/1.2 var(--fonte-titulo); }
+.pdv-itens { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 320px; overflow-y: auto; }
+.pdv-itens li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
+  background: var(--superficie); border-radius: 10px; padding: 8px 10px; }
+.pdv-nome { display: grid; font-weight: 650; min-width: 0; }
+.pdv-nome small { font-weight: 500; font-size: 12px; color: var(--texto-2); }
+.pdv-mais-menos { display: inline-flex; align-items: center; gap: 6px; }
+.pdv-mais-menos button { width: 30px; height: 30px; min-height: 0; padding: 0; border-radius: 8px; font-weight: 800; font-size: 16px; }
+.pdv-mais-menos b { min-width: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.pdv-sub { font-variant-numeric: tabular-nums; min-width: 76px; text-align: right; }
+.pdv-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; border-top: 2px solid var(--borda-forte); }
+.pdv-total b { font: 800 30px/1 var(--fonte-titulo); color: var(--marca); font-variant-numeric: tabular-nums; }
+.pdv-formas { display: flex; flex-wrap: wrap; }
+.pdv-troco { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+.pdv-troco label, .pdv-cliente { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--texto-2); }
+.pdv-troco input { width: 130px; }
+.pdv-cliente input { width: 100%; }
+.pdv-troco .positivo { color: var(--ok); font-weight: 800; font-size: 16px; }
+.pdv-carrinho button.grande { width: 100%; }
+.vendas-lista .positivo { color: var(--ok); }
+.venda-linha { cursor: default; }
+.venda-acoes { padding: 0 16px 10px 76px; }
+@media (max-width: 900px) {
+  .pdv { grid-template-columns: 1fr; }
+  .pdv-carrinho { border-left: 0; border-top: 1px solid var(--borda); border-radius: 0 0 var(--raio) var(--raio); }
+  .venda-acoes { padding-left: 16px; }
+}

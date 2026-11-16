@@ -1,8 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Erro, useAcao } from '@/app/(painel)/acoes';
 import { brl } from '@/lib/formato';
+
+// Abas do caixa: o turno, a venda direta no balcão e as despesas
+export function AbasCaixa() {
+  const caminho = usePathname();
+  const abas = [['/caixa', 'Meu caixa'], ['/caixa/vender', 'Vender'], ['/caixa/despesas', 'Despesas']];
+  const ativa = (h) => (h === '/caixa' ? caminho === '/caixa' : caminho.startsWith(h));
+  return (
+    <nav className="abas nao-imprimir">
+      {abas.map(([h, n]) => <Link key={h} href={h} className={ativa(h) ? 'ativa' : ''}>{n}</Link>)}
+    </nav>
+  );
+}
 
 // Estorno de um pagamento lançado errado: devolve o valor ao saldo da conta do hóspede
 export function EstornarPagamento({ pagamento, temTurno }) {
