@@ -29,6 +29,8 @@ Painel web (Next.js 15 + Supabase) da fase 1 do sistema de gestão do hotel.
   mostra uma linha só, quitada; se não paga, as diárias entram na notinha para acertar na saída.
 - **Venda no balcão** (Caixa > Vender): vende produtos direto no caixa, sem notinha de hóspede, com troco,
   baixa de estoque, recibo e cancelamento.
+- **Lucro dos produtos**: custo de compra (médio, atualizado nas entradas de estoque); o relatório mostra
+  vendido, custo, perdas, lucro e margem por produto.
 - **Relatórios** (administração e gerência): quanto entrou, quanto saiu e quanto sobrou no período;
   gastos por categoria e com funcionários (salários só para o administrador); busca "quanto gastei com
   pão, bolo, detergente..."; gráfico dos últimos 6 meses.
@@ -50,6 +52,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 8. `banco/hotel_fase1h.sql`: reservas pela recepção (diária combinada, sinal, cancelamento).
 9. `banco/hotel_fase1i.sql`: hospedagem paga na entrada ou na saída.
 10. `banco/hotel_fase1j.sql`: venda direta no balcão (Caixa > Vender).
+11. `banco/hotel_fase1k.sql`: custo dos produtos e lucro no relatório.
 
 ## Publicar na Vercel
 

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { brl } from '@/lib/formato';
 import { MovimentarEstoque, RegistroForm } from '../formularios';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ const CAMPOS = [
     cores: { frigobar: 'azul', restaurante: 'ambar', lavanderia: 'verde', servico: 'roxo', outro: 'neutro' },
   },
   { nome: 'preco', rotulo: 'Preço de venda', tipo: 'numero', obrigatorio: true, moeda: true },
+  { nome: 'custo', rotulo: 'Custo de compra', tipo: 'numero', moeda: true },
   { nome: 'estoque_minimo', rotulo: 'Estoque mínimo', tipo: 'numero', passo: '1', padrao: 0 },
   { nome: 'controla_estoque', rotulo: 'Controlar estoque', tipo: 'check', seFalso: 'Sem controle de estoque' },
   { nome: 'ativo', rotulo: 'À venda', tipo: 'check', seFalso: 'Fora de venda' },
@@ -52,7 +54,8 @@ export default async function CadastroProdutos() {
         <p className="nota">
           Produto novo começa com estoque zero: depois de adicionar, lance a entrada logo abaixo dele.
           O estoque baixa sozinho a cada venda e volta se a venda for estornada.
-          Mudar o preço vale só para as próximas vendas.
+          Mudar o preço vale só para as próximas vendas. O custo de compra serve para o relatório de lucro:
+          ao lançar uma entrada com custo, ele é recalculado sozinho (custo médio).
         </p>
         <RegistroForm tabela="produtos" campos={CAMPOS} rotuloNovo="Novo produto" rotuloSalvar="Adicionar produto" />
         {produtos.length > 0 && (
@@ -62,11 +65,18 @@ export default async function CadastroProdutos() {
               return (
                 <RegistroForm
                   key={p.id} tabela="produtos" id={p.id} inicial={p} campos={CAMPOS}
-                  destaque={p.controla_estoque ? (
-                    <span className={`estoque-selo${baixo ? ' baixo' : ''}`} title={baixo ? 'Abaixo do mínimo' : 'Em estoque'}>
-                      <b>{qtd(p.estoque_atual)}</b><small>{baixo ? 'baixo' : 'em estoque'}</small>
-                    </span>
-                  ) : null}
+                  destaque={<>
+                    {p.custo != null && Number(p.preco) > 0 && (
+                      <span className="chip cor-verde" title="Lucro por unidade">
+                        lucro {brl(Number(p.preco) - Number(p.custo))} ({Math.round(((Number(p.preco) - Number(p.custo)) / Number(p.preco)) * 100)}%)
+                      </span>
+                    )}
+                    {p.controla_estoque ? (
+                      <span className={`estoque-selo${baixo ? ' baixo' : ''}`} title={baixo ? 'Abaixo do mínimo' : 'Em estoque'}>
+                        <b>{qtd(p.estoque_atual)}</b><small>{baixo ? 'baixo' : 'em estoque'}</small>
+                      </span>
+                    ) : null}
+                  </>}
                 >
                   {p.controla_estoque ? <MovimentarEstoque produtoId={p.id} /> : null}
                 </RegistroForm>

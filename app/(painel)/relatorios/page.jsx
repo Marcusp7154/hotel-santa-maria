@@ -94,6 +94,16 @@ export default async function Relatorios({ searchParams }) {
     return <div className="mensagem erro">{error.message}</div>;
   }
 
+  // Lucro dos produtos (precisa do hotel_fase1k.sql; sem ele a seção explica o que falta)
+  const { data: rp, error: erroProd } = await supabase.rpc('fn_relatorio_produtos', { p_de: de, p_ate: ate });
+  const prods = rp?.produtos || [];
+  const vendidoProd = prods.reduce((t, x) => t + Number(x.vendido), 0);
+  const custoProd = prods.reduce((t, x) => t + Number(x.custo), 0);
+  const perdasProd = (rp?.perdas || []).reduce((t, x) => t + Number(x.valor), 0);
+  const lucroProd = vendidoProd - custoProd - perdasProd;
+  const semCusto = prods.filter((x) => Number(x.sem_custo) > 0);
+  const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+
   const recebido = Object.values(r.recebido_por_forma || {}).reduce((t, v) => t + Number(v), 0);
   const despesas = (r.despesas_por_categoria || []).reduce((t, c) => t + Number(c.total), 0);
   const salarios = r.folha ? Number(r.folha.total) : 0;
@@ -195,6 +205,66 @@ export default async function Relatorios({ searchParams }) {
           <p className="nota">Faturado é o que foi lançado nas contas (diárias, produtos); recebido é o que foi pago de fato.</p>
         </section>
       </div>
+
+      <section className="bloco" style={{ marginTop: 18 }}>
+        <header>
+          <h2>Lucro dos produtos da recepção</h2>
+          {!erroProd && prods.length > 0 && <b className={lucroProd < 0 ? 'texto-erro' : 'texto-ok'}>{brl(lucroProd)}</b>}
+        </header>
+        {erroProd ? (
+          <div className="vazio">Para ver o lucro dos produtos, rode o script hotel_fase1k.sql no Supabase.</div>
+        ) : prods.length === 0 && perdasProd === 0 ? (
+          <div className="vazio">Nenhum produto vendido em {periodoTexto}.</div>
+        ) : (
+          <>
+            <div className="lucro-resumo">
+              <div><small>Vendido</small><b>{brl(vendidoProd)}</b></div>
+              <div><small>− Custo de compra</small><b>{brl(custoProd)}</b></div>
+              {perdasProd > 0 && <div><small>− Perdas e quebras</small><b>{brl(perdasProd)}</b></div>}
+              <div className="destaque"><small>= Lucro</small><b className={lucroProd < 0 ? 'texto-erro' : ''}>{brl(lucroProd)}</b><small>margem {pct(lucroProd, vendidoProd)}</small></div>
+            </div>
+            {semCusto.length > 0 && (
+              <div className="mensagem aviso" style={{ margin: '0 16px 12px' }}>
+                Sem custo cadastrado: {semCusto.map((x) => x.nome).join(', ')}. O lucro deles aparece maior do que é.
+                Informe o custo em <Link href="/cadastros/produtos">Cadastros &gt; Produtos</Link> ou ao lançar a entrada de estoque.
+              </div>
+            )}
+            <div className="tabela-rolagem">
+              <table className="tabela">
+                <thead>
+                  <tr><th>Produto</th><th className="num">Qtd</th><th className="num">Vendido</th><th className="num">Custo</th><th className="num">Lucro</th><th className="num">Margem</th></tr>
+                </thead>
+                <tbody>
+                  {prods.map((x) => (
+                    <tr key={x.produto_id}>
+                      <td>
+                        {x.nome}
+                        {Number(x.sem_custo) > 0 && <small className="texto-erro" style={{ display: 'block' }}>sem custo em {Number(x.sem_custo).toLocaleString('pt-BR')} un.</small>}
+                      </td>
+                      <td className="num">{Number(x.quantidade).toLocaleString('pt-BR')}</td>
+                      <td className="num">{brl(x.vendido)}</td>
+                      <td className="num">{brl(x.custo)}</td>
+                      <td className="num"><b className={Number(x.lucro) < 0 ? 'texto-erro' : ''}>{brl(x.lucro)}</b></td>
+                      <td className="num">{pct(Number(x.lucro), Number(x.vendido))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="linha-total">
+                    <td>Total</td><td /><td className="num">{brl(vendidoProd)}</td><td className="num">{brl(custoProd)}</td>
+                    <td className="num">{brl(vendidoProd - custoProd)}</td><td className="num">{pct(vendidoProd - custoProd, vendidoProd)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <p className="nota">
+              Lucro = valor vendido (a hóspedes e no balcão, já tirando vendas canceladas) − custo de compra das unidades vendidas
+              − perdas. {Number(rp.compras) > 0 && <>Compras de estoque lançadas no período: {brl(rp.compras)}. </>}
+              Despesas como gás, funcionários e luz não entram aqui; elas estão em &quot;Para onde foi o dinheiro&quot;.
+            </p>
+          </>
+        )}
+      </section>
 
       <section className="bloco" style={{ marginTop: 18 }}>
         <header>
