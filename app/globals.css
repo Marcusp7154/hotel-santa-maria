@@ -209,9 +209,46 @@ input[type='checkbox'] { accent-color: var(--marca); width: 16px; height: 16px; 
 
 /* Quartos (governança) */
 .grade-quartos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 14px 16px; }
-.quarto { border: 1px solid var(--borda); border-radius: 12px; padding: 10px 12px; display: grid; gap: 7px; background: var(--superficie); }
-.quarto .numero { font: 750 22px/1 var(--fonte-titulo); letter-spacing: -0.02em; }
-.quarto select { width: 100%; }
+.quarto {
+  --q-fundo: #0e9f6e; --q-texto: #fff; --q-suave: rgb(255 255 255 / 0.18);
+  border-radius: 14px; padding: 12px 13px; display: grid; gap: 6px; align-content: start;
+  background: var(--q-fundo); color: var(--q-texto); min-height: 128px;
+  box-shadow: 0 8px 18px -12px var(--q-fundo);
+}
+.quarto.sit-livre { --q-fundo: #0e9f6e; }
+.quarto.sit-ocupado { --q-fundo: #c8102e; }
+.quarto.sit-reservado { --q-fundo: #6d28d9; }
+.quarto.sit-sujo { --q-fundo: #f5b800; --q-texto: #3a2a00; --q-suave: rgb(0 0 0 / 0.1); }
+.quarto.sit-em_limpeza { --q-fundo: #ea7a0c; }
+.quarto.sit-interditado { --q-fundo: #64748b; }
+.quarto-topo { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.quarto .numero { font: 800 26px/1 var(--fonte-titulo); letter-spacing: -0.02em; }
+.quarto-sit {
+  font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px;
+  background: var(--q-suave); color: inherit; white-space: nowrap;
+}
+.quarto-quem { display: grid; min-width: 0; color: inherit; line-height: 1.25; }
+a.quarto-quem:hover { color: inherit; text-decoration: underline; }
+.quarto-quem b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quarto .quarto-quem small, .quarto small.quarto-tipo { font-size: 12px; color: inherit; opacity: 0.9; }
+.quarto-alerta {
+  justify-self: start; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px;
+  background: #fff3c4; color: #5c4100;
+}
+.quarto select {
+  width: 100%; margin-top: auto; background: var(--q-suave); color: inherit;
+  border: 1px solid rgb(255 255 255 / 0.35); font-weight: 650;
+}
+.quarto.sit-sujo select { border-color: rgb(0 0 0 / 0.2); }
+.quarto select option { color: #1a1a1a; background: #fff; }
+.legenda-quartos { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; color: var(--texto-2); }
+.legenda-quartos .leg { display: inline-flex; align-items: center; gap: 5px; font-weight: 650; }
+.legenda-quartos i { width: 10px; height: 10px; border-radius: 3px; background: #0e9f6e; }
+.leg.sit-ocupado i { background: #c8102e; }
+.leg.sit-reservado i { background: #6d28d9; }
+.leg.sit-sujo i { background: #f5b800; }
+.leg.sit-em_limpeza i { background: #ea7a0c; }
+.leg.sit-interditado i { background: #64748b; }
 
 /* ---------------------------------------------------------------------
    Login

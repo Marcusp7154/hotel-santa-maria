@@ -13,6 +13,15 @@ const CAMPOS_RESERVA = `
   reserva_quartos ( id, ativo, quarto_id, tipo_quarto_id, data_inicio, data_fim,
                     quartos ( numero, status ), tipos_quarto ( nome ) )`;
 
+const SITUACOES = [
+  { id: 'livre', nome: 'Livre' },
+  { id: 'ocupado', nome: 'Ocupado' },
+  { id: 'reservado', nome: 'Reservado' },
+  { id: 'sujo', nome: 'Sujo' },
+  { id: 'em_limpeza', nome: 'Em limpeza' },
+  { id: 'interditado', nome: 'Interditado' },
+];
+
 function quartosDaReserva(r) {
   return (r.reserva_quartos || []).filter((rq) => rq.ativo);
 }
@@ -64,6 +73,33 @@ export default async function Hoje() {
   }
 
   const contaDe = (reservaId) => contas.find((c) => c.reserva_id === reservaId);
+
+  // Situação de cada quarto: ocupado > reservado para hoje > limpeza
+  const ocupantes = new Map();
+  for (const r of hospedados) {
+    for (const rq of quartosDaReserva(r)) {
+      if (rq.quarto_id && rq.data_inicio <= hoje) {
+        const texto = rq.data_fim < hoje ? `saída atrasada (${dataCurta(rq.data_fim)})` : rq.data_fim === hoje ? 'sai hoje' : `até ${dataCurta(rq.data_fim)}`;
+        ocupantes.set(rq.quarto_id, { reserva: r, texto });
+      }
+    }
+  }
+  const reservados = new Map();
+  for (const r of chegadas) {
+    for (const rq of quartosDaReserva(r)) {
+      if (rq.quarto_id && !reservados.has(rq.quarto_id)) {
+        reservados.set(rq.quarto_id, { reserva: r, texto: r.data_checkin < hoje ? `chegada atrasada (${dataCurta(r.data_checkin)})` : 'chega hoje' });
+      }
+    }
+  }
+  const SIT = Object.fromEntries(SITUACOES.map((x) => [x.id, x]));
+  const situacaoQuartos = quartos.map((q) => {
+    if (ocupantes.has(q.id)) return { q, sit: SIT.ocupado, quem: ocupantes.get(q.id) };
+    if (reservados.has(q.id)) return { q, sit: SIT.reservado, quem: reservados.get(q.id) };
+    const id = q.status === 'sujo' ? 'sujo' : q.status === 'em_limpeza' ? 'em_limpeza' : q.status === 'interditado' ? 'interditado' : 'livre';
+    return { q, sit: SIT[id], quem: null };
+  });
+  const contagemSit = Object.fromEntries(SITUACOES.map((x) => [x.id, situacaoQuartos.filter((s) => s.sit.id === x.id).length]));
   const porStatus = (s) => quartos.filter((q) => q.status === s).length;
   const livresHoje = quartos.length - (rel.quartos_ocupados ?? 0);
 
@@ -209,21 +245,34 @@ export default async function Hoje() {
       <section className="bloco" style={{ marginTop: 16 }}>
         <header>
           <h2>Quartos</h2>
-          <span className="fraco" style={{ fontSize: 13 }}>
-            {porStatus('limpo') + porStatus('inspecionado')} prontos · {porStatus('sujo')} sujos · {porStatus('em_limpeza')} em limpeza · {porStatus('interditado')} interditados
-          </span>
+          <div className="legenda-quartos">
+            {SITUACOES.filter((x) => contagemSit[x.id] > 0).map((x) => (
+              <span key={x.id} className={`leg sit-${x.id}`}><i aria-hidden="true" />{contagemSit[x.id]} {x.nome.toLowerCase()}</span>
+            ))}
+          </div>
         </header>
         {quartos.length === 0 && (
-          <div className="vazio">Nenhum quarto cadastrado ainda. Cadastre os tipos de quarto e os quartos no Supabase.</div>
+          <div className="vazio">Nenhum quarto cadastrado ainda. Cadastre em Cadastros &gt; Quartos.</div>
         )}
         <div className="grade-quartos">
-          {quartos.map((q) => (
-            <div className="quarto" key={q.id}>
-              <div className="linha" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          {situacaoQuartos.map(({ q, sit, quem }) => (
+            <div className={`quarto sit-${sit.id}`} key={q.id}>
+              <div className="quarto-topo">
                 <span className="numero">{q.numero}</span>
-                <span className={`etiqueta ${q.status}`}>{NOME_STATUS_QUARTO[q.status]}</span>
+                <span className="quarto-sit">{sit.nome}</span>
               </div>
-              <small>{q.tipos_quarto?.nome}{q.andar != null ? ` · ${q.andar}º andar` : ''}</small>
+              {quem ? (
+                <Link href={`/reservas/${quem.reserva.id}`} className="quarto-quem">
+                  <b>{quem.reserva.hospedes?.nome}</b>
+                  <small>{quem.texto}</small>
+                </Link>
+              ) : (
+                <div className="quarto-quem"><small>{q.tipos_quarto?.nome}{q.andar != null ? ` · ${q.andar}º andar` : ''}</small></div>
+              )}
+              {quem && <small className="quarto-tipo">{q.tipos_quarto?.nome}{q.andar != null ? ` · ${q.andar}º andar` : ''}</small>}
+              {(sit.id === 'ocupado' || sit.id === 'reservado') && !['limpo', 'inspecionado'].includes(q.status) && (
+                <span className="quarto-alerta">{sit.id === 'reservado' ? 'Limpar antes da chegada' : NOME_STATUS_QUARTO[q.status]}</span>
+              )}
               <StatusQuarto quartoId={q.id} status={q.status} />
             </div>
           ))}
