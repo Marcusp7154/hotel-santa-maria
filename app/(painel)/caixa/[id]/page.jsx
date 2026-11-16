@@ -7,18 +7,20 @@ import { contexto } from '../../funcionarios/acesso';
 
 export const dynamic = 'force-dynamic';
 
-// Relatório de fechamento de um turno de caixa
+const diaDe = (ts) => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date(ts));
+
+// Relatório de movimento de um turno de caixa, pensado para folha A4 em pé (retrato)
 export default async function RelatorioTurno({ params }) {
   const { id } = await params;
   const { supabase } = await contexto();
 
   const [turnoR, pagR, movR, despR, hotelR] = await Promise.all([
     supabase.from('turnos_caixa').select('*, perfis ( nome )').eq('id', id).maybeSingle(),
-    supabase.from('pagamentos').select('id, forma, valor, estorno_de, motivo, criado_em, contas ( titular, reservas ( codigo ) )')
+    supabase.from('pagamentos').select('id, forma, valor, estorno_de, motivo, hospedagem, criado_em, contas ( titular, reservas ( codigo ) )')
       .eq('turno_id', id).order('criado_em'),
     supabase.from('movimentos_caixa').select('*').eq('turno_id', id).order('criado_em'),
     supabase.from('despesas').select('*, categorias_despesa ( nome )').eq('turno_id', id).order('criado_em'),
-    supabase.from('hoteis').select('nome').maybeSingle(),
+    supabase.from('hoteis').select('nome, cnpj, cidade, uf').maybeSingle(),
   ]);
   const t = turnoR.data;
   if (!t) notFound();
@@ -28,81 +30,163 @@ export default async function RelatorioTurno({ params }) {
   const r = resumirTurno(t, pags, movs, desps);
   const fechado = Boolean(t.fechado_em);
   const dif = Number(t.diferenca || 0);
+  const hotel = hotelR.data || {};
+
+  // Turno que passa da meia-noite (noturno): mostra o dia junto da hora
+  const variosDias = diaDe(t.aberto_em) !== diaDe(t.fechado_em || new Date().toISOString());
+  const hora = (ts) => (variosDias ? `${diaDe(ts)} ${horaDe(ts)}` : horaDe(ts));
+
+  const despValidas = desps.filter((d) => !d.cancelada_em);
+  const totalDesp = despValidas.reduce((s, d) => s + Number(d.valor), 0);
+  const totalReforco = movs.filter((m) => m.tipo !== 'sangria').reduce((s, m) => s + Number(m.valor), 0);
+  const formasUsadas = FORMAS.filter((f) => r.porForma[f]);
+  const esperado = fechado ? Number(t.valor_esperado) : r.esperado;
 
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <div className="cabecalho nao-imprimir" style={{ marginBottom: 0 }}>
+    <div className="relatorio-turno-pagina">
+      <div className="cabecalho nao-imprimir" style={{ marginBottom: 16 }}>
         <Link href="/caixa">← Caixa</Link>
         <BotaoImprimir rotulo="Imprimir relatório" />
       </div>
 
-      <article className="bloco notinha">
-        <header style={{ display: 'block' }}>
-          <h2>Relatório de caixa · {t.perfis?.nome}</h2>
-          <small>
-            {hotelR.data?.nome} · aberto {quando(t.aberto_em)} · {fechado ? `fechado ${quando(t.fechado_em)}` : 'ainda aberto'}
-          </small>
+      <article className="relatorio-turno">
+        <header className="rt-cabeca">
+          <div>
+            <div className="rt-hotel">{hotel.nome}</div>
+            <small>{[hotel.cnpj && `CNPJ ${hotel.cnpj}`, hotel.cidade && `${hotel.cidade}${hotel.uf ? `/${hotel.uf}` : ''}`].filter(Boolean).join(' · ')}</small>
+          </div>
+          <div className="rt-titulo">
+            <h1>Movimento do caixa</h1>
+            <span className={`etiqueta ${fechado ? 'finalizada' : 'confirmada'}`}>{fechado ? 'Fechado' : 'Ainda aberto'}</span>
+          </div>
         </header>
 
-        <div className="cartao totais">
-          <div className="linha"><span>Dinheiro na abertura</span><b>{brl(t.valor_abertura)}</b></div>
-          {FORMAS.filter((f) => r.porForma[f]).map((f) => (
-            <div className="linha" key={f}><span>Recebido em {NOME_FORMA[f].toLowerCase()}</span><b>{brl(r.porForma[f])}</b></div>
-          ))}
-          <div className="linha"><span>Total recebido</span><b>{brl(r.recebido)}</b></div>
-          {r.suprimento > 0 && <div className="linha"><span>Reforço de troco</span><b>{brl(r.suprimento)}</b></div>}
-          {r.sangria > 0 && <div className="linha"><span>Sangrias</span><b>− {brl(r.sangria)}</b></div>}
-          {r.despesaDinheiro > 0 && <div className="linha"><span>Despesas pagas em dinheiro</span><b>− {brl(r.despesaDinheiro)}</b></div>}
-          {r.despesaOutras > 0 && <div className="linha fraco"><span>Despesas no Pix ou cartão (não mexem na gaveta)</span><span>{brl(r.despesaOutras)}</span></div>}
-          <div className="linha saldo-final"><span>Dinheiro esperado na gaveta</span><b>{brl(fechado ? t.valor_esperado : r.esperado)}</b></div>
-          {fechado && (
-            <>
-              <div className="linha"><span>Dinheiro contado</span><b>{brl(t.valor_contado)}</b></div>
-              <div className="linha">
-                <span>Diferença</span>
-                <b className={dif < 0 ? 'texto-erro' : ''}>{dif === 0 ? 'Bateu' : `${brl(dif)} ${dif < 0 ? '(faltou)' : '(sobrou)'}`}</b>
-              </div>
-              {t.observacao && <div className="detalhe">{t.observacao}</div>}
-            </>
+        <dl className="rt-dados">
+          <div><dt>Responsável</dt><dd>{t.perfis?.nome}</dd></div>
+          <div><dt>Abertura</dt><dd>{quando(t.aberto_em)}</dd></div>
+          <div><dt>Fechamento</dt><dd>{fechado ? quando(t.fechado_em) : '—'}</dd></div>
+          <div><dt>Lançamentos</dt><dd>{pags.length + desps.length + movs.length}</dd></div>
+        </dl>
+
+        <div className="rt-resumo">
+          <section>
+            <h2>Recebido por forma</h2>
+            <table className="rt-tabela">
+              <tbody>
+                {formasUsadas.length === 0 && <tr><td className="fraco">Nada recebido</td><td /></tr>}
+                {formasUsadas.map((f) => (
+                  <tr key={f}><td>{NOME_FORMA[f]}</td><td className="num">{brl(r.porForma[f])}</td></tr>
+                ))}
+                <tr className="rt-total"><td>Total recebido</td><td className="num">{brl(r.recebido)}</td></tr>
+                {totalDesp > 0 && <tr><td>Despesas (todas as formas)</td><td className="num">− {brl(totalDesp)}</td></tr>}
+              </tbody>
+            </table>
+          </section>
+
+          <section>
+            <h2>Conferência da gaveta (dinheiro)</h2>
+            <table className="rt-tabela">
+              <tbody>
+                <tr><td>Troco na abertura</td><td className="num">{brl(t.valor_abertura)}</td></tr>
+                <tr><td>+ Recebido em dinheiro</td><td className="num">{brl(r.porForma.dinheiro || 0)}</td></tr>
+                {r.suprimento > 0 && <tr><td>+ Reforço de troco</td><td className="num">{brl(r.suprimento)}</td></tr>}
+                {r.sangria > 0 && <tr><td>− Sangrias</td><td className="num">{brl(r.sangria)}</td></tr>}
+                {r.despesaDinheiro > 0 && <tr><td>− Despesas pagas em dinheiro</td><td className="num">{brl(r.despesaDinheiro)}</td></tr>}
+                <tr className="rt-total"><td>= Esperado na gaveta</td><td className="num">{brl(esperado)}</td></tr>
+                {fechado && (
+                  <>
+                    <tr><td>Contado no fechamento</td><td className="num">{brl(t.valor_contado)}</td></tr>
+                    <tr className={`rt-diferenca${dif < 0 ? ' faltou' : ''}`}>
+                      <td>Diferença</td>
+                      <td className="num">{dif === 0 ? 'Bateu' : `${brl(dif)} ${dif < 0 ? '(faltou)' : '(sobrou)'}`}</td>
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+          </section>
+        </div>
+        {t.observacao && <p className="rt-obs"><b>Observação do fechamento:</b> {t.observacao}</p>}
+
+        <section className="rt-secao">
+          <h2>Recebimentos <small>{pags.length} · {brl(r.recebido)}</small></h2>
+          {pags.length === 0 ? <p className="fraco">Nenhum recebimento.</p> : (
+            <table className="rt-tabela listrada">
+              <colgroup><col className="c-hora" /><col /><col className="c-forma" /><col className="c-valor" /></colgroup>
+              <thead><tr><th>Hora</th><th>Hóspede / reserva</th><th>Forma</th><th className="num">Valor</th></tr></thead>
+              <tbody>
+                {pags.map((p) => (
+                  <tr key={p.id} className={p.estorno_de ? 'estornado' : ''}>
+                    <td>{hora(p.criado_em)}</td>
+                    <td>
+                      {p.estorno_de ? 'Estorno · ' : ''}{p.contas?.titular || '—'}
+                      {p.contas?.reservas?.codigo && <span className="fraco"> · {p.contas.reservas.codigo}</span>}
+                      {(p.hospedagem || p.motivo) && (
+                        <small className="fraco"> · {[p.hospedagem && !p.motivo ? 'hospedagem' : null, p.motivo].filter(Boolean).join(' · ')}</small>
+                      )}
+                    </td>
+                    <td>{NOME_FORMA[p.forma]}</td>
+                    <td className="num">{brl(p.valor)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot><tr><td colSpan={3}>Total recebido</td><td className="num">{brl(r.recebido)}</td></tr></tfoot>
+            </table>
           )}
-        </div>
+        </section>
 
-        <table className="tabela">
-          <thead><tr><th>Hora</th><th>Descrição</th><th>Forma</th><th className="num">Valor</th></tr></thead>
-          <tbody>
-            {pags.length + movs.length + desps.length === 0 && <tr><td colSpan={4} className="fraco">Nenhum movimento.</td></tr>}
-            {[
-              ...pags.map((p) => ({
-                k: p.id, em: p.criado_em, forma: NOME_FORMA[p.forma], valor: Number(p.valor),
-                desc: `${p.estorno_de ? 'Estorno · ' : ''}${p.contas?.titular || ''} · ${p.contas?.reservas?.codigo || ''}${p.motivo ? ` · ${p.motivo}` : ''}`,
-              })),
-              ...movs.map((m) => ({
-                k: m.id, em: m.criado_em, forma: 'Dinheiro', valor: m.tipo === 'sangria' ? -Number(m.valor) : Number(m.valor),
-                desc: `${m.tipo === 'sangria' ? 'Sangria' : 'Reforço de troco'} · ${m.motivo}`,
-              })),
-              ...desps.map((d) => ({
-                k: d.id, em: d.criado_em, forma: NOME_FORMA[d.forma],
-                valor: d.cancelada_em ? 0 : (d.forma === 'dinheiro' ? -Number(d.valor) : Number(d.valor)),
-                desc: `Despesa · ${d.categorias_despesa?.nome} · ${d.descricao}${d.fornecedor ? ` · ${d.fornecedor}` : ''}`
-                  + (d.cancelada_em ? ` · CANCELADA (${d.motivo_cancelamento}) · era ${brl(d.valor)}` : '')
-                  + (!d.cancelada_em && d.forma !== 'dinheiro' ? ' · fora da gaveta' : ''),
-              })),
-            ].sort((a, b) => (a.em < b.em ? -1 : 1)).map((x) => (
-              <tr key={x.k}>
-                <td>{horaDe(x.em)}</td>
-                <td>{x.desc}</td>
-                <td>{x.forma}</td>
-                <td className="num"><span className={x.valor < 0 ? 'texto-erro' : ''}>{brl(x.valor)}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {desps.length > 0 && (
+          <section className="rt-secao">
+            <h2>Despesas <small>{despValidas.length} · {brl(totalDesp)}</small></h2>
+            <table className="rt-tabela listrada">
+              <colgroup><col className="c-hora" /><col /><col className="c-forma" /><col className="c-valor" /></colgroup>
+              <thead><tr><th>Hora</th><th>Descrição</th><th>Pago com</th><th className="num">Valor</th></tr></thead>
+              <tbody>
+                {desps.map((d) => (
+                  <tr key={d.id} className={d.cancelada_em ? 'estornado' : ''}>
+                    <td>{hora(d.criado_em)}</td>
+                    <td>
+                      {d.descricao}
+                      <small className="fraco"> · {d.categorias_despesa?.nome}{d.fornecedor ? ` · ${d.fornecedor}` : ''}</small>
+                      {d.cancelada_em && <small> · CANCELADA: {d.motivo_cancelamento}</small>}
+                    </td>
+                    <td>{d.forma === 'dinheiro' ? 'Dinheiro (gaveta)' : NOME_FORMA[d.forma]}</td>
+                    <td className="num">{d.cancelada_em ? <s>{brl(d.valor)}</s> : brl(d.valor)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr><td colSpan={3}>Total de despesas{r.despesaDinheiro > 0 && r.despesaOutras > 0 ? ` (${brl(r.despesaDinheiro)} da gaveta)` : ''}</td><td className="num">{brl(totalDesp)}</td></tr>
+              </tfoot>
+            </table>
+          </section>
+        )}
 
-        <div className="assinatura">
-          <p>Conferido por:</p>
-          <div className="linha-assinatura">{t.perfis?.nome}</div>
-          <div className="linha-assinatura" style={{ marginTop: 32 }}>Gerência</div>
-        </div>
+        {movs.length > 0 && (
+          <section className="rt-secao">
+            <h2>Reforço de troco <small>{movs.length} · {brl(totalReforco)}</small></h2>
+            <table className="rt-tabela listrada">
+              <colgroup><col className="c-hora" /><col /><col className="c-forma" /><col className="c-valor" /></colgroup>
+              <thead><tr><th>Hora</th><th>Motivo</th><th>Tipo</th><th className="num">Valor</th></tr></thead>
+              <tbody>
+                {movs.map((m) => (
+                  <tr key={m.id}>
+                    <td>{hora(m.criado_em)}</td>
+                    <td>{m.motivo}</td>
+                    <td>{m.tipo === 'sangria' ? 'Sangria' : 'Reforço'}</td>
+                    <td className="num">{m.tipo === 'sangria' ? '− ' : ''}{brl(m.valor)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        <footer className="rt-assinaturas">
+          <div><span className="linha-assinatura" />{t.perfis?.nome}<small>Responsável pelo caixa</small></div>
+          <div><span className="linha-assinatura" />Gerência<small>Conferido em ____/____/______</small></div>
+        </footer>
+        <p className="rt-rodape">Impresso em {quando(new Date().toISOString())}{hotel.nome ? ` · ${hotel.nome}` : ''}</p>
       </article>
     </div>
   );
