@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { dataCurta, NOME_STATUS_QUARTO } from '@/lib/formato';
+import { dataCurta, NOME_STATUS_QUARTO, nomeAndar } from '@/lib/formato';
 import { StatusQuarto } from '../acoes';
 
-const tipoAndar = (q) => `${q.tipos_quarto?.nome || ''}${q.andar != null ? ` · ${q.andar}º andar` : ''}`;
+const tipoAndar = (q) => [q.tipos_quarto?.nome, nomeAndar(q.andar)].filter(Boolean).join(' · ');
 
 // Caixa colorida de um quarto (verde livre, vermelho ocupado, roxo reservado, amarelo sujo...)
 export function CartaoQuarto({ item, podeMudar = true, hoje }) {

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { nomeAndar } from '@/lib/formato';
 import { CartaoQuarto } from './cartao';
 import { situacaoDosQuartos, SITUACOES } from './situacao';
 
@@ -58,9 +59,9 @@ export default async function VisaoGeral({ searchParams }) {
       {total === 0 && <div className="vazio">Nenhum quarto cadastrado ainda. Cadastre em Cadastros &gt; Quartos.</div>}
       {total > 0 && visiveis.length === 0 && <div className="vazio">Nenhum quarto nessa situação. <Link href="/quartos">Ver todos</Link></div>}
 
-      {[...andares.entries()].map(([andar, itens]) => (
+      {[...andares.entries()].sort(([a], [b]) => (a === '—' ? 99 : a) - (b === '—' ? 99 : b)).map(([andar, itens]) => (
         <section className="andar" key={andar}>
-          {andares.size > 1 || andar !== '—' ? <h2>{andar === '—' ? 'Sem andar' : `${andar}º andar`}</h2> : null}
+          {andares.size > 1 || andar !== '—' ? <h2>{andar === '—' ? 'Sem andar' : nomeAndar(andar)}</h2> : null}
           <div className="grade-quartos grande">
             {itens.map((i) => <CartaoQuarto key={i.q.id} item={i} hoje={recepcao ? hoje : null} />)}
           </div>

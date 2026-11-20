@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { ordenarQuartos } from '@/lib/formato';
+import { OPCOES_ANDAR, ordenarQuartos } from '@/lib/formato';
 import { RegistroForm } from '../formularios';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +26,7 @@ export default async function CadastroQuartos() {
   const camposQuarto = [
     { nome: 'numero', rotulo: 'Número', tipo: 'texto', obrigatorio: true, papel: 'avatar' },
     { nome: 'tipo_quarto_id', rotulo: 'Tipo', tipo: 'select', opcoes: opcoesTipo, obrigatorio: true, papel: 'titulo' },
-    { nome: 'andar', rotulo: 'Andar', tipo: 'numero', passo: '1' },
+    { nome: 'andar', rotulo: 'Andar', tipo: 'select', opcoes: OPCOES_ANDAR, papel: 'subtitulo' },
     { nome: 'observacao', rotulo: 'Observação', tipo: 'texto', largo: true },
     { nome: 'ativo', rotulo: 'Em uso', tipo: 'check', seFalso: 'Fora de uso' },
   ];

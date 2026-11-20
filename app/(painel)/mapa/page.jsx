@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { dataCurta, diasEntre, diaSemana, NOME_STATUS_RESERVA, ordenarQuartos, paraData, somarDias } from '@/lib/formato';
+import { dataCurta, diasEntre, diaSemana, NOME_STATUS_RESERVA, nomeAndar, ordenarQuartos, paraData, somarDias } from '@/lib/formato';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,7 +100,7 @@ export default async function Mapa({ searchParams }) {
             <div key={t.id}>
               <div className="grupo">{t.nome}</div>
               {doTipo.map((q) => (
-                <Linha key={q.id} rotulo={q.numero} sub={q.andar != null ? `${q.andar}º andar` : null}
+                <Linha key={q.id} rotulo={q.numero} sub={nomeAndar(q.andar)}
                        segmentos={ocupacao.filter((o) => o.quarto_id === q.id)}
                        dias={dias} inicio={inicio} hoje={hoje} quartoId={q.id} />
               ))}
