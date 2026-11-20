@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { Menu } from './menu';
+import { SeletorTema } from './tema';
 
 const NOME_PERFIL = { admin: 'Administrador', gerente: 'Gerente', recepcao: 'Recepção', governanca: 'Governança' };
 
@@ -71,7 +72,10 @@ export default async function PainelLayout({ children }) {
           <form action="/sair" method="post"><button type="submit" className="sair">Sair</button></form>
         </div>
       </aside>
-      <main className="conteudo">{children}</main>
+      <main className="conteudo">
+        <div className="barra-topo nao-imprimir"><SeletorTema /></div>
+        {children}
+      </main>
     </div>
   );
 }
