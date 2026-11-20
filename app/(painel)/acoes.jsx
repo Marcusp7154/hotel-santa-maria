@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { brl, NOME_FORMA, NOME_STATUS_QUARTO } from '@/lib/formato';
+import { BuscaProduto } from './busca-produto';
 
 // Erros técnicos do banco em português
 const ERROS = [
@@ -328,18 +329,8 @@ export function LancarConsumo({ contaId, produtos, temTurno }) {
 
   return (
     <form className="acoes" onSubmit={vender}>
-      <select value={produtoId} onChange={(e) => setProdutoId(e.target.value)} disabled={ocupado}>
-        <option value="">Vender produto…</option>
-        {produtos.map((p) => {
-          const resta = disponivel(p);
-          return (
-            <option key={p.id} value={p.id} disabled={resta <= 0}>
-              {p.nome} · {brl(p.preco)}
-              {p.controla_estoque ? (resta > 0 ? ` · ${resta.toLocaleString('pt-BR')} em estoque` : ' · esgotado') : ''}
-            </option>
-          );
-        })}
-      </select>
+      <BuscaProduto produtos={produtos} escolhido={produto} desativado={ocupado}
+                    onEscolher={(p) => { setProdutoId(p?.id || ''); setFeito(null); }} />
       <input type="number" min="1" step="1" value={quantidade} style={{ width: 64 }} aria-label="Quantidade"
              onChange={(e) => setQuantidade(e.target.value)} disabled={ocupado} />
       <select value={pagamento} onChange={(e) => setPagamento(e.target.value)} disabled={ocupado} aria-label="Pagamento">

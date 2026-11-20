@@ -1211,3 +1211,29 @@ a.lh-nome:hover { color: var(--marca); }
 .rt-tabela tr.rt-alerta td { color: var(--erro); }
 .rt-legenda { font-size: 11px; color: var(--texto-2); margin: 8px 0 0; }
 @media print { .rt-tabela tr.rt-alerta td { color: #000; font-weight: 700; } }
+
+/* Procurar produto (notinha e venda no balcão) */
+.busca-produto { position: relative; flex: 1 1 240px; min-width: 200px; }
+.busca-produto > input { width: 100%; }
+.busca-produto-lista {
+  list-style: none; margin: 4px 0 0; padding: 4px; position: absolute; left: 0; right: 0; z-index: 20;
+  background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio-p);
+  box-shadow: 0 12px 30px -12px rgb(0 0 0 / 0.35); max-height: 300px; overflow-y: auto;
+}
+.busca-produto-lista li.fraco { padding: 8px 10px; font-size: 14px; }
+.busca-produto-lista button {
+  all: unset; box-sizing: border-box; width: 100%; display: flex; justify-content: space-between; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 14px;
+}
+.busca-produto-lista button.marcado, .busca-produto-lista button:hover { background: var(--marca-tinta); }
+.busca-produto-lista button:disabled { opacity: 0.45; cursor: not-allowed; }
+.bp-info { display: grid; text-align: right; }
+.bp-info small { font-size: 11.5px; color: var(--texto-2); }
+.bp-info small.pouco { color: #b45309; font-weight: 700; }
+.busca-produto-escolhido {
+  display: inline-flex; align-items: center; gap: 8px; padding: 5px 6px 5px 12px; border-radius: 999px;
+  background: var(--marca-tinta); box-shadow: inset 0 0 0 1px var(--marca-suave);
+}
+.pdv-busca-linha { display: flex; gap: 10px; align-items: center; }
+.pdv-busca-linha .pdv-busca { flex: 1; }
+.bloco:has(.busca-produto-lista), .bloco:has(.achados) { overflow: visible; }

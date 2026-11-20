@@ -62,7 +62,19 @@ export function Pdv({ produtos, temTurno }) {
   return (
     <div className="pdv">
       <div className="pdv-produtos">
-        <input type="search" placeholder="Procurar produto…" value={busca} onChange={(e) => setBusca(e.target.value)} className="pdv-busca" />
+        <div className="pdv-busca-linha">
+          <input type="search" placeholder="Procurar produto pelo nome… (Enter adiciona o primeiro)" value={busca} autoFocus
+                 aria-label="Procurar produto" className="pdv-busca"
+                 onChange={(e) => setBusca(e.target.value)}
+                 onKeyDown={(e) => {
+                   if (e.key !== 'Enter') return;
+                   e.preventDefault();
+                   const primeiro = lista.find((p) => restante(p) > 0);
+                   if (primeiro) { somar(primeiro, 1); setBusca(''); }
+                 }} />
+          {termo && <small className="fraco">{lista.length} encontrado(s)</small>}
+        </div>
+        {termo && lista.length === 0 && <div className="vazio">Nenhum produto com &quot;{busca}&quot;.</div>}
         {produtos.length === 0 && <div className="vazio">Nenhum produto ativo. Cadastre em Cadastros &gt; Produtos.</div>}
         <div className="pdv-grade">
           {lista.map((p) => {
