@@ -65,11 +65,15 @@ export function CancelarReserva({ reservaId, temSinal }) {
 }
 
 const CAMPOS_HOSPEDE = [
-  ['nome', 'Nome', 'text'], ['telefone', 'Telefone / WhatsApp', 'tel'], ['email', 'E-mail', 'email'],
-  ['numero_documento', 'Documento', 'text'], ['nascimento', 'Nascimento', 'date'], ['nacionalidade', 'Nacionalidade', 'text'],
-  ['endereco', 'Endereço', 'text'], ['cidade', 'Cidade', 'text'], ['uf', 'UF', 'text'], ['pais', 'País', 'text'],
+  ['nome', 'Nome completo', 'text'], ['telefone', 'Celular / WhatsApp', 'tel'], ['telefone2', 'Telefone fixo', 'tel'],
+  ['email', 'E-mail', 'email'], ['numero_documento', 'Documento principal', 'text'],
+  ['rg', 'RG', 'text'], ['rg_orgao', 'Órgão expedidor', 'text'],
+  ['nascimento', 'Data de nascimento', 'date'], ['sexo', 'Sexo', 'sexo'], ['profissao', 'Profissão', 'text'],
+  ['nacionalidade', 'Nacionalidade', 'text'], ['endereco', 'Endereço', 'text'], ['cep', 'CEP', 'text'],
+  ['cidade', 'Cidade', 'text'], ['uf', 'Estado (UF)', 'text'], ['pais', 'País', 'text'],
   ['observacoes', 'Observações', 'text'],
 ];
+const TEXTO_LIVRE = ['nome', 'telefone', 'telefone2', 'email', 'rg', 'rg_orgao', 'profissao', 'nacionalidade', 'endereco', 'cep', 'cidade', 'pais', 'observacoes'];
 
 export function EditarHospede({ hospede }) {
   const { ocupado, erro, setErro, rodar } = useAcao();
@@ -81,13 +85,11 @@ export function EditarHospede({ hospede }) {
       e.preventDefault();
       if (!v.nome.trim()) { setErro('O nome não pode ficar vazio.'); return; }
       const doc = v.numero_documento.replace(/[^0-9A-Za-z]/g, '');
-      const dados = {
-        nome: v.nome.trim().replace(/\s+/g, ' '), telefone: v.telefone.trim() || null, email: v.email.trim() || null,
+      const dados = Object.fromEntries(TEXTO_LIVRE.map((k) => [k, String(v[k] ?? '').trim().replace(/\s+/g, ' ') || null]));
+      Object.assign(dados, {
         numero_documento: doc || null, tipo_documento: doc ? v.tipo_documento : null,
-        nascimento: v.nascimento || null, cidade: v.cidade.trim() || null, uf: v.uf.trim().toUpperCase() || null,
-        nacionalidade: v.nacionalidade.trim() || null, endereco: v.endereco.trim() || null, pais: v.pais.trim() || null,
-        observacoes: v.observacoes.trim() || null,
-      };
+        nascimento: v.nascimento || null, uf: String(v.uf).trim().toUpperCase() || null, sexo: v.sexo || null,
+      });
       const r = await rodar((sb) => sb.from('hospedes').update(dados).eq('id', hospede.id));
       if (r.ok) setAberto(false);
     }}>
@@ -102,6 +104,10 @@ export function EditarHospede({ hospede }) {
               </select>
               <input id={`eh-${k}`} value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} />
             </div>
+          ) : tipo === 'sexo' ? (
+            <select id={`eh-${k}`} value={v.sexo} onChange={(e) => setV({ ...v, sexo: e.target.value })}>
+              <option value="">—</option><option value="F">Feminino</option><option value="M">Masculino</option><option value="O">Outro</option>
+            </select>
           ) : (
             <input id={`eh-${k}`} type={tipo} value={v[k]} maxLength={k === 'uf' ? 2 : undefined}
                    style={k === 'uf' ? { width: 70, textTransform: 'uppercase' } : undefined}
@@ -111,6 +117,69 @@ export function EditarHospede({ hospede }) {
       ))}
       <div className="acoes" style={{ gridColumn: '1 / -1' }}>
         <button type="submit" className="primario" disabled={ocupado}>Salvar hóspede</button>
+        <button type="button" className="fantasma" onClick={() => setAberto(false)} disabled={ocupado}>Voltar</button>
+      </div>
+      <Erro texto={erro} />
+    </form>
+  );
+}
+
+export const MOTIVOS = [
+  ['turismo', 'Turismo'], ['negocio', 'Negócio'], ['convencao', 'Convenção'], ['lazer', 'Lazer'],
+  ['saude', 'Saúde'], ['religioso', 'Religioso'], ['esporte', 'Esporte'], ['outros', 'Outros'],
+];
+export const TRANSPORTES = [['automovel', 'Automóvel'], ['onibus', 'Ônibus'], ['van', 'Micro-ônibus / Van'], ['aviao', 'Avião'], ['outro', 'Outro']];
+
+// Dados da estadia que vão para a ficha de papel: motivo, transporte, origem, destino, placa e acompanhantes
+export function DadosFicha({ reserva }) {
+  const { ocupado, erro, rodar } = useAcao();
+  const [aberto, setAberto] = useState(false);
+  const [v, setV] = useState({
+    motivo_viagem: reserva.motivo_viagem || '', transporte: reserva.transporte || '',
+    procedencia: reserva.procedencia || '', proximo_destino: reserva.proximo_destino || '', placa_carro: reserva.placa_carro || '',
+  });
+  const [acomp, setAcomp] = useState(() => (Array.isArray(reserva.acompanhantes) ? reserva.acompanhantes : []).map((a) => ({ nome: a.nome || '', idade: a.idade ?? '' })));
+  if (!aberto) return <button className="fantasma" onClick={() => setAberto(true)}>Preencher dados da ficha</button>;
+  const mudar = (k, x) => setV({ ...v, [k]: x });
+  return (
+    <form className="dados-ficha" onSubmit={async (e) => {
+      e.preventDefault();
+      const lista = acomp.filter((a) => a.nome.trim()).map((a) => ({ nome: a.nome.trim().replace(/\s+/g, ' '), idade: a.idade === '' ? null : Number(a.idade) }));
+      const r = await rodar((sb) => sb.from('reservas').update({
+        motivo_viagem: v.motivo_viagem || null, transporte: v.transporte || null,
+        procedencia: v.procedencia.trim() || null, proximo_destino: v.proximo_destino.trim() || null,
+        placa_carro: v.placa_carro.trim().toUpperCase() || null, acompanhantes: lista,
+      }).eq('id', reserva.id));
+      if (r.ok) setAberto(false);
+    }}>
+      <div className="campo"><span className="rotulo-campo">Motivo da viagem</span>
+        <div className="segmentos">{MOTIVOS.map(([k, n]) => (
+          <button key={k} type="button" className={v.motivo_viagem === k ? 'ativo' : ''} onClick={() => mudar('motivo_viagem', v.motivo_viagem === k ? '' : k)}>{n}</button>
+        ))}</div></div>
+      <div className="campo"><span className="rotulo-campo">Transporte</span>
+        <div className="segmentos">{TRANSPORTES.map(([k, n]) => (
+          <button key={k} type="button" className={v.transporte === k ? 'ativo' : ''} onClick={() => mudar('transporte', v.transporte === k ? '' : k)}>{n}</button>
+        ))}</div></div>
+      <div className="grade-campos">
+        <div className="campo largo2"><label htmlFor="df-orig">Origem (cidade - país)</label>
+          <input id="df-orig" value={v.procedencia} onChange={(e) => mudar('procedencia', e.target.value)} placeholder="Ex.: São Luís - Brasil" /></div>
+        <div className="campo largo2"><label htmlFor="df-dest">Próximo destino (cidade - país)</label>
+          <input id="df-dest" value={v.proximo_destino} onChange={(e) => mudar('proximo_destino', e.target.value)} /></div>
+        <div className="campo"><label htmlFor="df-placa">Placa do carro</label>
+          <input id="df-placa" value={v.placa_carro} onChange={(e) => mudar('placa_carro', e.target.value)} style={{ width: 130, textTransform: 'uppercase' }} /></div>
+      </div>
+      <div className="campo"><span className="rotulo-campo">Acompanhantes</span>
+        {acomp.map((a, i) => (
+          <div className="acoes" key={i}>
+            <input placeholder="Nome" value={a.nome} onChange={(e) => setAcomp(acomp.map((x, j) => (j === i ? { ...x, nome: e.target.value } : x)))} style={{ flex: '1 1 220px' }} />
+            <input type="number" min="0" max="120" placeholder="Idade" value={a.idade} onChange={(e) => setAcomp(acomp.map((x, j) => (j === i ? { ...x, idade: e.target.value } : x)))} style={{ width: 90 }} />
+            <button type="button" className="fantasma" onClick={() => setAcomp(acomp.filter((_, j) => j !== i))}>Tirar</button>
+          </div>
+        ))}
+        <button type="button" className="fantasma pequeno" onClick={() => setAcomp([...acomp, { nome: '', idade: '' }])}>+ Acompanhante</button>
+      </div>
+      <div className="acoes">
+        <button type="submit" className="primario" disabled={ocupado}>Salvar dados da ficha</button>
         <button type="button" className="fantasma" onClick={() => setAberto(false)} disabled={ocupado}>Voltar</button>
       </div>
       <Erro texto={erro} />

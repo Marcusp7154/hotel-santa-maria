@@ -6,7 +6,7 @@ import {
   textoEntrada, textoSaida,
 } from '@/lib/formato';
 import { contexto, SemAcesso } from '../../funcionarios/acesso';
-import { CancelarReserva, ConfirmarReserva, EditarHospede, MudarDatas } from '../componentes';
+import { CancelarReserva, ConfirmarReserva, DadosFicha, EditarHospede, MOTIVOS, MudarDatas, TRANSPORTES } from '../componentes';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,6 +144,25 @@ export default async function PaginaReserva({ params, searchParams }) {
               ))}
             </>
           )}
+        </section>
+
+        <section className="bloco">
+          <header className="com-edicao">
+            <h2>Ficha de hospedagem</h2>
+            <Link href={`/ficha/${h.id}?reserva=${r.id}`} className="botao primario">Imprimir ficha (PDF)</Link>
+            <DadosFicha reserva={r} />
+          </header>
+          <div className="cartao">
+            <div className="linha"><span>Motivo da viagem</span><b>{(MOTIVOS.find(([k]) => k === r.motivo_viagem) || [])[1] || <span className="fraco">não informado</span>}</b></div>
+            <div className="linha"><span>Transporte</span><b>{(TRANSPORTES.find(([k]) => k === r.transporte) || [])[1] || <span className="fraco">não informado</span>}</b></div>
+            {r.procedencia && <div className="linha"><span>Origem</span><b>{r.procedencia}</b></div>}
+            {r.proximo_destino && <div className="linha"><span>Próximo destino</span><b>{r.proximo_destino}</b></div>}
+            {r.placa_carro && <div className="linha"><span>Placa do carro</span><b>{r.placa_carro}</b></div>}
+            {Array.isArray(r.acompanhantes) && r.acompanhantes.length > 0 && (
+              <div className="linha"><span>Acompanhantes</span>
+                <b>{r.acompanhantes.map((a) => `${a.nome}${a.idade != null ? ` (${a.idade})` : ''}`).join(', ')}</b></div>
+            )}
+          </div>
         </section>
 
         <section className="bloco">

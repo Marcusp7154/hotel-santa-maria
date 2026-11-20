@@ -75,7 +75,8 @@ export default async function FichaHospede({ params }) {
           {tel && <a className="botao" href={`tel:${tel}`}>Ligar</a>}
           {tel && <a className="botao" target="_blank" rel="noreferrer" href={`https://wa.me/${(tel.length <= 11 ? '55' : '') + tel}`}>WhatsApp</a>}
           <Link className="botao primario" href={`/reservas/nova?hospede=${h.id}`}>+ Nova reserva para ele</Link>
-          <BotaoImprimir rotulo="Imprimir ficha" />
+          <Link className="botao" href={`/ficha/${h.id}`}>Ficha do hotel (PDF)</Link>
+          <BotaoImprimir rotulo="Imprimir esta tela" />
         </div>
       </div>
 

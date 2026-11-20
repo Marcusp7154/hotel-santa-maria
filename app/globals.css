@@ -1128,3 +1128,76 @@ a.lh-nome:hover { color: var(--marca); }
   .lh-mais-txt { display: none; }
   .lh-corpo { padding-left: 14px; }
 }
+
+/* ---------------------------------------------------------------------
+   Ficha de hospedagem impressa (modelo de papel do hotel) — A4 deitado
+   --------------------------------------------------------------------- */
+.impressao { min-height: 100vh; background: var(--fundo); padding: 16px; }
+.ficha-barra {
+  max-width: 287mm; margin: 0 auto 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  justify-content: space-between; font-size: 14px;
+}
+.ficha-papel {
+  --fp-linha: #1a1a1a; --fp-vermelho: #a3192b;
+  width: 287mm; min-height: 196mm; margin: 0 auto; background: #fff; color: #111; padding: 8mm 9mm;
+  font-family: 'Instrument Sans', Arial, sans-serif; box-shadow: 0 12px 40px -20px rgb(0 0 0 / 0.5);
+  display: flex; flex-direction: column; gap: 2.2mm;
+}
+.fp-topo { display: grid; grid-template-columns: 62mm 1fr 78mm; align-items: center; gap: 6mm; margin-bottom: 1mm; }
+.fp-logo {
+  background: var(--fp-vermelho); color: #fff; border-radius: 2mm; height: 28mm; display: grid; place-content: center;
+  justify-items: center; line-height: 1;
+}
+.fp-sm { font: italic 400 30px/1 'Brush Script MT', 'Segoe Script', cursive; letter-spacing: -1px; border-bottom: 1px solid #fff; padding: 0 8mm 1mm; }
+.fp-logo-nome { font: 800 22px/1.1 'Bricolage Grotesque', Arial, sans-serif; margin-top: 1.5mm; letter-spacing: -0.5px; }
+.fp-logo-hotel { font-size: 9px; letter-spacing: 4px; margin-top: 1mm; border-top: 1px solid #fff; padding-top: 1mm; }
+.fp-topo h1 { font: 900 30px/1 'Bricolage Grotesque', Impact, sans-serif; text-align: center; margin: 0; letter-spacing: 0.5px; color: #111; }
+.fp-contato { display: grid; gap: 1mm; font-size: 12px; }
+.fp-contato b { font-size: 14px; }
+.fp-grade { display: grid; border: 1.2px solid var(--fp-linha); border-radius: 2mm; overflow: hidden; }
+.fc { border-right: 1px solid var(--fp-linha); border-bottom: 1px solid var(--fp-linha); padding: 1mm 2mm; min-height: 11.5mm; display: flex; flex-direction: column; }
+.fc-rot { font-size: 10.5px; color: #222; }
+.fc-rot i { font-style: normal; color: #555; }
+.fc-val { font-size: 14px; font-weight: 650; margin-top: auto; min-height: 5mm; }
+.fp-pessoal {
+  grid-template-columns: repeat(20, 1fr);
+  grid-template-areas:
+    "nome nome nome nome nome nome nome nome nome nome nome nome nome nome cel cel cel cel cel cel"
+    "tel tel tel tel tel nac nac nac nac nac ida ida nas nas nas nas sex sex sex sex"
+    "end end end end end end end end end cid cid cid cid cid cid cep cep cep cep cep"
+    "est est est est pai pai pai pai pai pai pro pro pro pro pro pro pro pro pro pro"
+    "cpf cpf cpf cpf cpf cpf cpf rg rg rg rg rg rg org org org org org org org";
+}
+.fp-pessoal .fc:nth-last-child(-n+3) { border-bottom: 0; }
+.fp-pessoal .fc[style*="cel"], .fp-pessoal .fc[style*="sex"], .fp-pessoal .fc[style*="cep"],
+.fp-pessoal .fc[style*="pro"], .fp-pessoal .fc[style*="org"] { border-right: 0; }
+.fp-barra {
+  background: #111; color: #fff; font: 800 13px/1 'Bricolage Grotesque', Arial, sans-serif; letter-spacing: 0.3px;
+  padding: 1.6mm 3mm; border-radius: 1.5mm;
+}
+.fp-barra i { font-style: normal; font-weight: 600; }
+.fp-opcoes { border: 1.2px solid var(--fp-linha); border-radius: 2mm; padding: 1.5mm 3mm; display: grid; gap: 1mm; }
+.fp-opcoes-linha { display: grid; grid-template-columns: repeat(4, 1fr); font-size: 13px; }
+.fc-marca { font-weight: 800; white-space: pre; }
+.fp-viagem { grid-template-columns: 1fr 1fr; grid-template-areas: "ori des"; }
+.fp-viagem .fc { border-bottom: 0; }
+.fp-viagem .fc:last-child { border-right: 0; }
+.fp-final {
+  grid-template-columns: 11fr 3fr 5fr 3fr;
+  grid-template-areas: "anome aida cin qto" "ass pla cout qto";
+}
+.fp-final .fc[style*="qto"] { border-right: 0; border-bottom: 0; }
+.fp-final .fc[style*="ass"], .fp-final .fc[style*="pla"], .fp-final .fc[style*="cout"] { border-bottom: 0; }
+.fc.forte .fc-rot { font-weight: 800; color: #111; font-size: 12px; }
+.fc.fc-quarto .fc-val { font: 800 28px/1 'Bricolage Grotesque', Arial, sans-serif; margin: auto 0; text-align: center; }
+.fc.assinatura { min-height: 15mm; }
+.fp-rodape { margin: auto 0 0; font-size: 9.5px; color: #666; text-align: right; }
+
+@page ficha { size: A4 landscape; margin: 6mm; }
+@media print {
+  .impressao { padding: 0; background: #fff; page: ficha; }
+  .ficha-barra { display: none; }
+  .ficha-papel { box-shadow: none; width: auto; min-height: 0; height: 196mm; padding: 2mm 3mm; }
+  .fp-logo, .fp-barra { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media (max-width: 1100px) { .impressao { overflow-x: auto; } }
