@@ -49,7 +49,7 @@ export default async function PaginaReserva({ params, searchParams }) {
   const pago = (pagoR.data || []).reduce((a, p) => a + Number(p.valor), 0);
 
   const n = diasEntre(r.data_checkin, r.data_checkout);
-  const ativos = (r.reserva_quartos || []).filter((q) => q.ativo || ['cancelada', 'no_show'].includes(r.status));
+  const ativos = (r.reserva_quartos || []).filter((q) => q.ativo || ['cancelada', 'no_show', 'finalizada'].includes(r.status));
   const quartos = (quartosR.data || []).sort(ordenarQuartos);
   const pendente = ['pre_reserva', 'confirmada'].includes(r.status);
   const hospedado = r.status === 'hospedado';

@@ -52,7 +52,7 @@ export default async function FichaImpressa({ params, searchParams }) {
   consulta = /^[0-9a-f-]{36}$/i.test(sp?.reserva || '') ? consulta.eq('id', sp.reserva) : consulta.neq('status', 'cancelada').order('data_checkin', { ascending: false });
   const { data: lista } = await consulta.limit(1);
   const r = lista?.[0] || null;
-  const quartos = r ? (r.reserva_quartos || []).filter((q) => q.ativo).map((q) => q.quartos?.numero).filter(Boolean).join(', ') : '';
+  const quartos = r ? (r.reserva_quartos || []).filter((q) => q.ativo || r.status === 'finalizada').map((q) => q.quartos?.numero).filter(Boolean).join(', ') : '';
   const acomp = Array.isArray(r?.acompanhantes) ? r.acompanhantes : [];
   const ehCpf = h.tipo_documento === 'cpf';
   const rg = h.rg || (h.tipo_documento === 'rg' ? h.numero_documento : '');

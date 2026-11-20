@@ -55,7 +55,7 @@ export default async function Reservar({ searchParams }) {
             ))}
             {lotados.map((t) => (
               <article className="s-opcao lotado" key={t.tipo_id}>
-                <div className="s-opcao-cabeca"><h3>{t.nome}</h3><span className="s-cap">lotado nessas datas</span></div>
+                <div className="s-opcao-cabeca"><h3>{t.nome}</h3><span className="s-cap">sem vaga nessas datas para {adultos + criancas} pessoa{adultos + criancas > 1 ? 's' : ''}</span></div>
               </article>
             ))}
           </div>

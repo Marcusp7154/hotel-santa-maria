@@ -138,7 +138,7 @@ export default async function PaginaReservas({ searchParams }) {
           </header>
           <ul className="lista-reservas">
             {g.itens.map((r) => {
-              const qs = (r.reserva_quartos || []).filter((q) => q.ativo || ['cancelada', 'no_show'].includes(r.status));
+              const qs = (r.reserva_quartos || []).filter((q) => q.ativo || ['cancelada', 'no_show', 'finalizada'].includes(r.status));
               const atrasada = aba.id === 'proximas' && r.data_checkin < hoje;
               return (
                 <li key={r.id}>

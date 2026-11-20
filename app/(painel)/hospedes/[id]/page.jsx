@@ -138,7 +138,7 @@ export default async function FichaHospede({ params }) {
               <tbody>
                 {reservas.map((r) => {
                   const cs = contaDe(r.id);
-                  const qs = (r.reserva_quartos || []).filter((q) => q.ativo || ['cancelada', 'no_show'].includes(r.status));
+                  const qs = (r.reserva_quartos || []).filter((q) => q.ativo || ['cancelada', 'no_show', 'finalizada'].includes(r.status));
                   return (
                     <tr key={r.id}>
                       <td><Link href={`/reservas/${r.id}`}><b>{r.codigo}</b></Link><small className="fraco" style={{ display: 'block' }}>{NOME_ORIGEM[r.origem]} · {r.adultos + r.criancas} pessoa(s)</small></td>

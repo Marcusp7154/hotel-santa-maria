@@ -43,7 +43,7 @@ export default async function Notinha({ params }) {
   const lancamentos = lancR.data || [];
   const pagamentos = pagR.data || [];
   const hotel = hotelR.data || {};
-  const quartos = (reserva?.reserva_quartos || []).filter((rq) => rq.ativo).map((rq) => rq.quartos?.numero).filter(Boolean);
+  const quartos = (reserva?.reserva_quartos || []).filter((rq) => rq.ativo || reserva?.status === 'finalizada').map((rq) => rq.quartos?.numero).filter(Boolean);
   const soma = (lista, campo) => lista.reduce((t, x) => t + Number(x[campo] || 0), 0);
 
   // Separa hospedagem (diárias e seus estornos) do consumo
