@@ -977,3 +977,6 @@ details.periodos .tabela { font-size: 13px; }
 /* Fechamento do caixa: troco separado do movimento */
 .fechar-caixa { display: grid; gap: 8px; padding: 12px; border-radius: var(--raio-p); border: 1px dashed var(--borda-forte); }
 .fechar-caixa .campo input { width: 170px; }
+.estadia-hora { font-size: 12.5px; font-weight: 700; color: var(--texto-2); margin-top: 2px; }
+.estadia-hora.feito { color: var(--ok); }
+.estadia-hora.feito::before { content: '✓ '; }

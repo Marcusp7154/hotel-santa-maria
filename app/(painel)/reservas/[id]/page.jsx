@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { AtribuirQuarto, BotaoCheckin, ReceberHospedagem } from '@/app/(painel)/acoes';
 import {
   brl, dataCurta, dataLonga, diasEntre, NOME_ORIGEM, NOME_STATUS_QUARTO, NOME_STATUS_RESERVA, noites, ordenarQuartos,
+  textoEntrada, textoSaida,
 } from '@/lib/formato';
 import { contexto, SemAcesso } from '../../funcionarios/acesso';
 import { CancelarReserva, ConfirmarReserva, EditarHospede, MudarDatas } from '../componentes';
@@ -26,7 +27,7 @@ export default async function PaginaReserva({ params, searchParams }) {
     .eq('id', id).maybeSingle();
   if (!r) notFound();
 
-  const [{ data: hoje }, contasR, quartosR, outrasR, hospR, turnoR] = await Promise.all([
+  const [{ data: hoje }, contasR, quartosR, outrasR, hospR, turnoR, hotelR] = await Promise.all([
     supabase.rpc('fn_hoje'),
     supabase.from('v_contas_saldo').select('conta_id, status, saldo').eq('reserva_id', id),
     supabase.from('quartos').select('id, numero, tipo_quarto_id, status').eq('ativo', true),
@@ -34,7 +35,9 @@ export default async function PaginaReserva({ params, searchParams }) {
       .eq('hospede_id', r.hospede_id).neq('id', id).order('data_checkin', { ascending: false }).limit(6),
     supabase.rpc('fn_hospedagem_resumo', { p_reserva: id }),
     supabase.from('turnos_caixa').select('id').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle(),
+    supabase.from('hoteis').select('hora_checkin, hora_checkout').maybeSingle(),
   ]);
+  const horario = hotelR.data || {};
   const hosp = hospR.data?.[0];
   const hospTotal = Number(hosp?.total || 0);
   const hospFalta = Number(hosp?.pendente || 0);
@@ -75,9 +78,11 @@ export default async function PaginaReserva({ params, searchParams }) {
         <section className="bloco">
           <header><h2>Estadia</h2><span className="etiqueta confirmada">{noites(n)}</span></header>
           <div className="estadia-datas">
-            <div><small>Entrada</small><b>{dataCurta(r.data_checkin)}</b><span className="fraco">{dataLonga(r.data_checkin)}</span></div>
+            <div><small>Entrada</small><b>{dataCurta(r.data_checkin)}</b><span className="fraco">{dataLonga(r.data_checkin)}</span>
+              <span className={`estadia-hora${r.checkin_em ? ' feito' : ''}`}>{textoEntrada(r, horario.hora_checkin)}</span></div>
             <span className="seta" aria-hidden="true">→</span>
-            <div><small>Saída</small><b>{dataCurta(r.data_checkout)}</b><span className="fraco">{dataLonga(r.data_checkout)}</span></div>
+            <div><small>Saída</small><b>{dataCurta(r.data_checkout)}</b><span className="fraco">{dataLonga(r.data_checkout)}</span>
+              <span className={`estadia-hora${r.checkout_em ? ' feito' : ''}`}>{textoSaida(r, horario.hora_checkout)}</span></div>
           </div>
           <div className="cartao">
             <div className="linha"><span>Pessoas</span><b>{r.adultos} adulto(s){r.criancas ? `, ${r.criancas} criança(s)` : ''}</b></div>

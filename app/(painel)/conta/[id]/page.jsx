@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { brl, dataCurta, NOME_FORMA, noites } from '@/lib/formato';
+import { brl, dataCurta, NOME_FORMA, noites, textoEntrada, textoSaida } from '@/lib/formato';
 import { BotaoImprimir, LancarConsumo, ReceberNota } from '../../acoes';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export default async function Notinha({ params }) {
 
   const [contaR, lancR, pagR, hotelR, produtosR, turnoR] = await Promise.all([
     supabase.from('contas')
-      .select('id, titular, status, criado_em, reserva_id, reservas ( id, codigo, status, data_checkin, data_checkout, reserva_quartos ( ativo, quartos ( numero ) ) )')
+      .select('id, titular, status, criado_em, reserva_id, reservas ( id, codigo, status, data_checkin, data_checkout, checkin_em, checkout_em, reserva_quartos ( ativo, quartos ( numero ) ) )')
       .eq('id', id).maybeSingle(),
     supabase.from('lancamentos')
       .select('id, tipo, descricao, quantidade, valor_unitario, valor_total, data_referencia, criado_em, estorno_de, motivo')
@@ -29,7 +29,7 @@ export default async function Notinha({ params }) {
     supabase.from('pagamentos')
       .select('id, forma, valor, lancamento_id, estorno_de, hospedagem, motivo, criado_em')
       .eq('conta_id', id).order('criado_em'),
-    supabase.from('hoteis').select('nome, cnpj, endereco, cidade, uf, telefone').maybeSingle(),
+    supabase.from('hoteis').select('nome, cnpj, endereco, cidade, uf, telefone, hora_checkin, hora_checkout').maybeSingle(),
     supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome'),
     supabase.from('turnos_caixa').select('id').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle(),
   ]);
@@ -107,7 +107,7 @@ export default async function Notinha({ params }) {
           </div>
           {reserva && (
             <div className="detalhe">
-              Reserva {reserva.codigo} · quarto {quartos.join(', ') || '—'} · {dataCurta(reserva.data_checkin)} a {dataCurta(reserva.data_checkout)}
+              Reserva {reserva.codigo} · quarto {quartos.join(', ') || '—'} · entrada {dataCurta(reserva.data_checkin)} ({textoEntrada(reserva, hotel.hora_checkin)}) · saída {dataCurta(reserva.data_checkout)} ({textoSaida(reserva, hotel.hora_checkout)})
             </div>
           )}
         </div>

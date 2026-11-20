@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { brl, dataCurta, dataLonga, NOME_STATUS_RESERVA, ordenarQuartos } from '@/lib/formato';
+import { brl, dataCurta, dataLonga, diaBR, horaBR, horaPadrao, NOME_STATUS_RESERVA, ordenarQuartos } from '@/lib/formato';
 import {
   AtribuirQuarto, BotaoAuditoria, BotaoCheckin, BotaoCheckout, Caixa, LancarConsumo, ReceberNota,
 } from './acoes';
@@ -9,7 +9,7 @@ import { situacaoDosQuartos, SITUACOES } from './quartos/situacao';
 export const dynamic = 'force-dynamic';
 
 const CAMPOS_RESERVA = `
-  id, codigo, data_checkin, data_checkout, adultos, criancas, status, origem,
+  id, codigo, data_checkin, data_checkout, checkin_em, adultos, criancas, status, origem,
   hospedes ( nome, telefone ),
   reserva_quartos ( id, ativo, quarto_id, tipo_quarto_id, data_inicio, data_fim,
                     quartos ( numero, status ), tipos_quarto ( nome ) )`;
@@ -33,7 +33,7 @@ export default async function Hoje() {
   ]);
   const financeiro = ['admin', 'gerente', 'recepcao'].includes(perfil?.perfil);
 
-  const [chegadasR, hospedadosR, quartosR, saldosR, produtosR, turnoR, abertoR, hospR] = await Promise.all([
+  const [chegadasR, hospedadosR, quartosR, saldosR, produtosR, turnoR, abertoR, hospR, hotelR] = await Promise.all([
     supabase.from('reservas').select(CAMPOS_RESERVA)
       .in('status', ['pre_reserva', 'confirmada']).lte('data_checkin', hoje).order('data_checkin'),
     supabase.from('reservas').select(CAMPOS_RESERVA)
@@ -44,7 +44,9 @@ export default async function Hoje() {
     financeiro ? supabase.from('turnos_caixa').select('id, aberto_em').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle() : { data: null },
     financeiro ? supabase.rpc('fn_caixa_aberto') : { data: [] },
     financeiro ? supabase.rpc('fn_hospedagem_resumo') : { data: [] },
+    supabase.from('hoteis').select('hora_checkin, hora_checkout').maybeSingle(),
   ]);
+  const horaHotel = hotelR.data || {};
   const hospedagemDe = (reservaId) => (hospR.data || []).find((h) => h.reserva_id === reservaId);
 
   const chegadas = chegadasR.data || [];
@@ -82,7 +84,8 @@ export default async function Hoje() {
         </div>
         <div className="detalhe">
           {r.codigo} · quarto {quartosDaReserva(r).map((rq) => rq.quartos?.numero).filter(Boolean).join(', ')} ·
-          saída {dataCurta(r.data_checkout)} · {hospedesTexto(r)}
+          {r.checkin_em && <>entrou {diaBR(r.checkin_em) === hoje ? 'hoje' : dataCurta(diaBR(r.checkin_em))} às {horaBR(r.checkin_em)} · </>}
+          saída {r.data_checkout === hoje ? 'hoje' : dataCurta(r.data_checkout)}{horaHotel.hora_checkout ? ` até ${horaPadrao(horaHotel.hora_checkout)}` : ''} · {hospedesTexto(r)}
         </div>
         {financeiro && hosp && Number(hosp.total) > 0 && (
           <div className="acoes">
@@ -145,7 +148,7 @@ export default async function Hoje() {
                   <span className={`etiqueta ${r.status}`}>{NOME_STATUS_RESERVA[r.status]}</span>
                 </div>
                 <div className="detalhe">
-                  {r.codigo} · {dataCurta(r.data_checkin)} a {dataCurta(r.data_checkout)} · {hospedesTexto(r)}
+                  {r.codigo} · {dataCurta(r.data_checkin)}{horaHotel.hora_checkin ? ` a partir das ${horaPadrao(horaHotel.hora_checkin)}` : ''} a {dataCurta(r.data_checkout)} · {hospedesTexto(r)}
                   {r.hospedes?.telefone ? ` · ${r.hospedes.telefone}` : ''}
                 </div>
                 {atrasada && <div className="mensagem aviso">Chegada era {dataCurta(r.data_checkin)}. Faça o check-in ou rode a auditoria para marcar no-show.</div>}
