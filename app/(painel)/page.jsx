@@ -33,13 +33,12 @@ export default async function Hoje() {
   ]);
   const financeiro = ['admin', 'gerente', 'recepcao'].includes(perfil?.perfil);
 
-  const [chegadasR, hospedadosR, quartosR, relatorioR, saldosR, produtosR, turnoR, abertoR, hospR] = await Promise.all([
+  const [chegadasR, hospedadosR, quartosR, saldosR, produtosR, turnoR, abertoR, hospR] = await Promise.all([
     supabase.from('reservas').select(CAMPOS_RESERVA)
       .in('status', ['pre_reserva', 'confirmada']).lte('data_checkin', hoje).order('data_checkin'),
     supabase.from('reservas').select(CAMPOS_RESERVA)
       .eq('status', 'hospedado').order('data_checkout'),
     supabase.from('quartos').select('id, numero, andar, status, tipo_quarto_id, tipos_quarto ( nome )').eq('ativo', true),
-    supabase.rpc('fn_relatorio_dia'),
     financeiro ? supabase.from('v_contas_saldo').select('conta_id, reserva_id, saldo').eq('status', 'aberta') : { data: [] },
     financeiro ? supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome') : { data: [] },
     financeiro ? supabase.from('turnos_caixa').select('id, aberto_em').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle() : { data: null },
@@ -53,7 +52,6 @@ export default async function Hoje() {
   const saidas = hospedados.filter((r) => r.data_checkout <= hoje);
   const ficam = hospedados.filter((r) => r.data_checkout > hoje);
   const quartos = (quartosR.data || []).sort(ordenarQuartos);
-  const rel = relatorioR.data || {};
   const contas = saldosR.data || [];
   const produtos = produtosR.data || [];
   const turno = turnoR.data;
@@ -67,8 +65,6 @@ export default async function Hoje() {
   const contaDe = (reservaId) => contas.find((c) => c.reserva_id === reservaId);
   const { contagem: contagemSit } = await situacaoDosQuartos(supabase, hoje);
 
-  const porStatus = (s) => quartos.filter((q) => q.status === s).length;
-  const livresHoje = quartos.length - (rel.quartos_ocupados ?? 0);
 
   function CartaoHospedado({ r, saindo }) {
     const conta = contaDe(r.id);
@@ -129,15 +125,6 @@ export default async function Hoje() {
           </div>
         )}
       </div>
-
-      <section className="indicadores">
-        <div className="indicador"><div className="valor">{rel.ocupacao_pct ?? 0}%</div><div className="rotulo">Ocupação</div></div>
-        <div className="indicador"><div className="valor">{chegadas.length}</div><div className="rotulo">Chegadas pendentes</div></div>
-        <div className="indicador"><div className="valor">{saidas.length}</div><div className="rotulo">Saídas pendentes</div></div>
-        <div className="indicador"><div className="valor">{hospedados.length}</div><div className="rotulo">Hospedados</div></div>
-        <div className="indicador"><div className="valor">{Math.max(livresHoje, 0)}</div><div className="rotulo">Quartos desocupados</div></div>
-        <div className="indicador"><div className="valor">{porStatus('sujo') + porStatus('em_limpeza')}</div><div className="rotulo">Quartos a limpar</div></div>
-      </section>
 
       <div className="colunas">
         <section className="bloco">
