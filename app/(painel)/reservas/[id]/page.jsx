@@ -6,7 +6,8 @@ import {
   textoEntrada, textoSaida,
 } from '@/lib/formato';
 import { contexto, SemAcesso } from '../../funcionarios/acesso';
-import { CancelarReserva, ConfirmarReserva, DadosFicha, EditarHospede, MOTIVOS, MudarDatas, TRANSPORTES } from '../componentes';
+import { MOTIVOS, TRANSPORTES } from '@/lib/ficha';
+import { CancelarReserva, ConfirmarReserva, DadosFicha, EditarHospede, MudarDatas } from '../componentes';
 
 export const dynamic = 'force-dynamic';
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Erro, useAcao } from '@/app/(painel)/acoes';
 import { diasEntre, noites, somarDias } from '@/lib/formato';
+import { MOTIVOS, TRANSPORTES } from '@/lib/ficha';
 
 export function ConfirmarReserva({ reservaId }) {
   const { ocupado, erro, rodar } = useAcao();
@@ -123,12 +124,6 @@ export function EditarHospede({ hospede }) {
     </form>
   );
 }
-
-export const MOTIVOS = [
-  ['turismo', 'Turismo'], ['negocio', 'Negócio'], ['convencao', 'Convenção'], ['lazer', 'Lazer'],
-  ['saude', 'Saúde'], ['religioso', 'Religioso'], ['esporte', 'Esporte'], ['outros', 'Outros'],
-];
-export const TRANSPORTES = [['automovel', 'Automóvel'], ['onibus', 'Ônibus'], ['van', 'Micro-ônibus / Van'], ['aviao', 'Avião'], ['outro', 'Outro']];
 
 // Dados da estadia que vão para a ficha de papel: motivo, transporte, origem, destino, placa e acompanhantes
 export function DadosFicha({ reserva }) {
