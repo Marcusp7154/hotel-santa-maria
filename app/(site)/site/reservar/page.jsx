@@ -58,7 +58,7 @@ export default async function Reservar({ searchParams }) {
             {livres.map((t) => (
               <EscolherQuarto key={t.tipo_id} tipo={t} entrada={entrada} saida={saida} adultos={adultos} criancas={criancas}
                               noites={noites} prazoHoras={hotel.prazo_horas} politica={hotel.politica_cancelamento}
-                              aberto={livres.length === 1 || t.tipo_id === tipoPreferido} />
+                              aberto={false} />
             ))}
             {lotados.map((t) => (
               <article className="s-opcao lotado" key={t.tipo_id}>
