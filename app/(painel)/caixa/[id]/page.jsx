@@ -41,6 +41,13 @@ export default async function RelatorioTurno({ params }) {
   const totalReforco = movs.filter((m) => m.tipo !== 'sangria').reduce((s, m) => s + Number(m.valor), 0);
   const formasUsadas = FORMAS.filter((f) => r.porForma[f]);
   const esperado = fechado ? Number(t.valor_esperado) : r.esperado;
+  // O troco não entra no relatório: mostra só o dinheiro do movimento
+  const abertura = Number(t.valor_abertura || 0);
+  const trocoFinal = t.troco_fechamento != null ? Number(t.troco_fechamento) : abertura;
+  const esperadoMov = esperado - abertura;
+  const contadoMov = Number(t.valor_contado || 0) - trocoFinal;
+  const ajusteTroco = trocoFinal - abertura;
+  const trocoMudou = Math.abs(ajusteTroco) > 0.004;
 
   return (
     <div className="relatorio-turno-pagina">
@@ -84,18 +91,20 @@ export default async function RelatorioTurno({ params }) {
           </section>
 
           <section>
-            <h2>Conferência da gaveta (dinheiro)</h2>
+            <h2>Dinheiro do movimento</h2>
             <table className="rt-tabela">
               <tbody>
-                <tr><td>Troco na abertura</td><td className="num">{brl(t.valor_abertura)}</td></tr>
-                <tr><td>+ Recebido em dinheiro</td><td className="num">{brl(r.porForma.dinheiro || 0)}</td></tr>
+                <tr><td>Recebido em dinheiro</td><td className="num">{brl(r.porForma.dinheiro || 0)}</td></tr>
                 {r.suprimento > 0 && <tr><td>+ Reforço de troco</td><td className="num">{brl(r.suprimento)}</td></tr>}
                 {r.sangria > 0 && <tr><td>− Sangrias</td><td className="num">{brl(r.sangria)}</td></tr>}
                 {r.despesaDinheiro > 0 && <tr><td>− Despesas pagas em dinheiro</td><td className="num">{brl(r.despesaDinheiro)}</td></tr>}
-                <tr className="rt-total"><td>= Esperado na gaveta</td><td className="num">{brl(esperado)}</td></tr>
+                <tr className="rt-total"><td>= Esperado</td><td className="num">{brl(esperadoMov)}</td></tr>
                 {fechado && (
                   <>
-                    <tr><td>Contado no fechamento</td><td className="num">{brl(t.valor_contado)}</td></tr>
+                    <tr><td>Contado no fechamento</td><td className="num">{brl(contadoMov)}</td></tr>
+                    {trocoMudou && (
+                      <tr><td>Troco deixado {ajusteTroco < 0 ? 'a menos' : 'a mais'} na gaveta</td><td className="num">{brl(ajusteTroco)}</td></tr>
+                    )}
                     <tr className={`rt-diferenca${dif < 0 ? ' faltou' : ''}`}>
                       <td>Diferença</td>
                       <td className="num">{dif === 0 ? 'Bateu' : `${brl(dif)} ${dif < 0 ? '(faltou)' : '(sobrou)'}`}</td>

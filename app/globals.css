@@ -973,3 +973,7 @@ details.periodos .tabela { font-size: 13px; }
   background: var(--q-suave);
 }
 .quarto-proxima:hover, .quarto-acao:hover { color: inherit; text-decoration: underline; }
+
+/* Fechamento do caixa: troco separado do movimento */
+.fechar-caixa { display: grid; gap: 8px; padding: 12px; border-radius: var(--raio-p); border: 1px dashed var(--borda-forte); }
+.fechar-caixa .campo input { width: 170px; }

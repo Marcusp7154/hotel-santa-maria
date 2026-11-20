@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { brl, NOME_FORMA, NOME_STATUS_QUARTO } from '@/lib/formato';
@@ -44,7 +44,7 @@ export function useAcao() {
       const { data, error } = await chamada(createClient());
       if (error) {
         setErro(traduzirErro(error.message));
-        return { ok: false };
+        return { ok: false, mensagem: error.message };
       }
       router.refresh();
       return { ok: true, data };
@@ -369,15 +369,25 @@ export function Caixa({ turno, resumo, outro, gestor }) {
   const { ocupado, erro, rodar } = useAcao();
   const [abertura, setAbertura] = useState('0');
   const [contado, setContado] = useState('');
+  const [troco, setTroco] = useState(null);
   const [fechado, setFechado] = useState(null);
+
+  // Ao abrir, sugere o troco que o último caixa deixou na gaveta
+  useEffect(() => {
+    if (turno) return;
+    createClient().rpc('fn_troco_sugerido').then(({ data }) => {
+      if (data != null) setAbertura(String(Number(data)));
+    });
+  }, [turno]);
 
   if (!turno && outro) {
     return (
       <div className="cartao">
         {fechado && (
           <div className={`mensagem ${Number(fechado.diferenca) === 0 ? 'ok' : 'aviso'}`}>
-            Turno fechado. Esperado {brl(fechado.valor_esperado)}, contado {brl(fechado.valor_contado)},
-            diferença {brl(fechado.diferenca)}.
+            Turno fechado. Movimento em dinheiro esperado {brl(fechado.valor_esperado - fechado.valor_abertura)},
+            contado {brl(fechado.valor_contado - (fechado.troco_fechamento ?? fechado.valor_abertura))}
+            {Number(fechado.diferenca) === 0 ? ': bateu.' : `, diferença ${brl(fechado.diferenca)}.`}
           </div>
         )}
         <div className="mensagem aviso">
@@ -397,8 +407,9 @@ export function Caixa({ turno, resumo, outro, gestor }) {
       }}>
         {fechado && (
           <div className={`mensagem ${Number(fechado.diferenca) === 0 ? 'ok' : 'aviso'}`}>
-            Turno fechado. Esperado {brl(fechado.valor_esperado)}, contado {brl(fechado.valor_contado)},
-            diferença {brl(fechado.diferenca)}.
+            Turno fechado. Movimento em dinheiro esperado {brl(fechado.valor_esperado - fechado.valor_abertura)},
+            contado {brl(fechado.valor_contado - (fechado.troco_fechamento ?? fechado.valor_abertura))}
+            {Number(fechado.diferenca) === 0 ? ': bateu.' : `, diferença ${brl(fechado.diferenca)}.`}
           </div>
         )}
         <span className="fraco">Seu caixa está fechado.</span>
@@ -417,6 +428,8 @@ export function Caixa({ turno, resumo, outro, gestor }) {
 
   const item = (k) => Number(resumo.find((r) => r.item === k)?.valor || 0);
   const esperado = item('abertura') + item('recebido_dinheiro') + item('suprimento') - item('sangria') - item('despesa');
+  const esperadoMov = esperado - item('abertura');
+  const trocoAtual = troco ?? String(item('abertura'));
 
   return (
     <div className="cartao">
@@ -431,19 +444,37 @@ export function Caixa({ turno, resumo, outro, gestor }) {
       {item('despesa') > 0 && <div className="linha"><span>Despesas pagas em dinheiro</span><b>− {brl(item('despesa'))}</b></div>}
       <div className="linha"><span>Dinheiro esperado na gaveta</span><b>{brl(esperado)}</b></div>
       <MovimentoCaixa />
-      <form className="acoes" onSubmit={async (e) => {
+      <form className="fechar-caixa" onSubmit={async (e) => {
         e.preventDefault();
-        const v = Number(String(contado).replace(',', '.'));
-        if (Number.isNaN(v) || contado === '') return;
-        const r = await rodar((sb) => sb.rpc('fn_fechar_turno', { p_turno: turno.id, p_valor_contado: v }));
+        const num = (x) => Number(String(x ?? '').replace(',', '.'));
+        const t = num(trocoAtual);
+        const mov = num(contado);
+        if (contado === '' || Number.isNaN(mov) || Number.isNaN(t) || t < 0 || mov < 0) return;
+        const total = Math.round((t + mov) * 100) / 100;
+        let r = await rodar((sb) => sb.rpc('fn_fechar_turno', { p_turno: turno.id, p_valor_contado: total, p_troco: t }));
+        // banco ainda sem o script do troco (hotel_fase1l.sql): fecha do jeito antigo
+        if (!r.ok && /fn_fechar_turno|p_troco|schema cache/i.test(String(r.mensagem || ''))) {
+          r = await rodar((sb) => sb.rpc('fn_fechar_turno', { p_turno: turno.id, p_valor_contado: total }));
+        }
         if (r.ok) setFechado(r.data);
       }}>
-        <div className="campo">
-          <label htmlFor="contado">Dinheiro contado</label>
-          <input id="contado" type="number" step="0.01" min="0" value={contado}
-                 onChange={(e) => setContado(e.target.value)} />
+        <b>Fechar o caixa</b>
+        <div className="acoes">
+          <div className="campo">
+            <label htmlFor="troco">Troco que fica na gaveta</label>
+            <input id="troco" type="number" step="0.01" min="0" value={trocoAtual}
+                   onChange={(e) => setTroco(e.target.value)} />
+          </div>
+          <div className="campo">
+            <label htmlFor="contado">Dinheiro do movimento (sem o troco)</label>
+            <input id="contado" type="number" step="0.01" min="0" value={contado} placeholder={esperadoMov.toFixed(2)}
+                   onChange={(e) => setContado(e.target.value)} />
+          </div>
+          <button type="submit" disabled={ocupado || contado === ''} style={{ alignSelf: 'end' }}>Fechar caixa</button>
         </div>
-        <button type="submit" disabled={ocupado} style={{ alignSelf: 'end' }}>Fechar caixa</button>
+        <small className="fraco">
+          Movimento em dinheiro esperado: <b>{brl(esperadoMov)}</b>. O troco fica para o próximo turno e não entra no relatório.
+        </small>
       </form>
       <Erro texto={erro} />
     </div>

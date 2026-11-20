@@ -53,6 +53,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 9. `banco/hotel_fase1i.sql`: hospedagem paga na entrada ou na saída.
 10. `banco/hotel_fase1j.sql`: venda direta no balcão (Caixa > Vender).
 11. `banco/hotel_fase1k.sql`: custo dos produtos e lucro no relatório.
+12. `banco/hotel_fase1l.sql`: troco separado do movimento no fechamento do caixa.
 
 ## Publicar na Vercel
 

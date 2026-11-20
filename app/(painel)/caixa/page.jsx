@@ -182,7 +182,7 @@ export default async function PaginaCaixa({ searchParams }) {
               <thead>
                 <tr>
                   <th>Operador</th><th>Aberto</th><th>Fechado</th><th className="num">Recebido</th>
-                  <th className="num">Dinheiro esperado</th><th className="num">Contado</th><th className="num">Diferença</th><th />
+                  <th className="num">Movimento esperado</th><th className="num">Contado</th><th className="num">Diferença</th><th />
                 </tr>
               </thead>
               <tbody>
@@ -195,8 +195,8 @@ export default async function PaginaCaixa({ searchParams }) {
                       <td>{quando(t.aberto_em)}</td>
                       <td>{quando(t.fechado_em)}</td>
                       <td className="num">{brl(r.recebido)}</td>
-                      <td className="num">{brl(t.valor_esperado)}</td>
-                      <td className="num">{brl(t.valor_contado)}</td>
+                      <td className="num">{brl(Number(t.valor_esperado) - Number(t.valor_abertura))}</td>
+                      <td className="num">{brl(Number(t.valor_contado) - Number(t.troco_fechamento ?? t.valor_abertura))}</td>
                       <td className="num"><b className={dif < 0 ? 'texto-erro' : ''}>{dif === 0 ? 'Bateu' : brl(dif)}</b></td>
                       <td><Link className="botao" href={`/caixa/${t.id}`}>Relatório</Link></td>
                     </tr>
