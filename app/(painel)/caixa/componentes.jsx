@@ -2,14 +2,30 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Erro, useAcao } from '@/app/(painel)/acoes';
 import { brl } from '@/lib/formato';
+
+// Fecha o dia: junta os caixas fechados desde o último fechamento e abre o relatório
+export function FecharDia({ qtd }) {
+  const { ocupado, erro, rodar } = useAcao();
+  const router = useRouter();
+  return (
+    <div className="acoes">
+      <button type="button" className="primario grande" disabled={ocupado} onClick={async () => {
+        if (!window.confirm(`Fechar o dia juntando ${qtd} caixa(s)? Depois de fechado, o relatório não muda.`)) return;
+        const r = await rodar((sb) => sb.rpc('fn_fechar_dia'));
+        if (r.ok) router.push(`/caixa/dia/${r.data}`);
+      }}>{ocupado ? 'Fechando…' : 'Fechar o dia e imprimir'}</button>
+      <Erro texto={erro} />
+    </div>
+  );
+}
 
 // Abas do caixa: o turno, a venda direta no balcão e as despesas
 export function AbasCaixa() {
   const caminho = usePathname();
-  const abas = [['/caixa', 'Meu caixa'], ['/caixa/vender', 'Vender'], ['/caixa/despesas', 'Despesas']];
+  const abas = [['/caixa', 'Meu caixa'], ['/caixa/vender', 'Vender'], ['/caixa/despesas', 'Despesas'], ['/caixa/dia', 'Fechamento do dia']];
   const ativa = (h) => (h === '/caixa' ? caminho === '/caixa' : caminho.startsWith(h));
   return (
     <nav className="abas nao-imprimir">

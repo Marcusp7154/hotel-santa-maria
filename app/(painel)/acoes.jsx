@@ -387,7 +387,7 @@ export function Caixa({ turno, resumo, outro, gestor }) {
           <div className={`mensagem ${Number(fechado.diferenca) === 0 ? 'ok' : 'aviso'}`}>
             Turno fechado. Movimento em dinheiro esperado {brl(fechado.valor_esperado - fechado.valor_abertura)},
             contado {brl(fechado.valor_contado - (fechado.troco_fechamento ?? fechado.valor_abertura))}
-            {Number(fechado.diferenca) === 0 ? ': bateu.' : `, diferença ${brl(fechado.diferenca)}.`}
+            {Number(fechado.diferenca) === 0 ? ': bateu.' : `, diferença ${brl(fechado.diferenca)}.`}{' '}<a href="/caixa/dia">Fechar o dia e imprimir</a>
           </div>
         )}
         <div className="mensagem aviso">
@@ -409,7 +409,7 @@ export function Caixa({ turno, resumo, outro, gestor }) {
           <div className={`mensagem ${Number(fechado.diferenca) === 0 ? 'ok' : 'aviso'}`}>
             Turno fechado. Movimento em dinheiro esperado {brl(fechado.valor_esperado - fechado.valor_abertura)},
             contado {brl(fechado.valor_contado - (fechado.troco_fechamento ?? fechado.valor_abertura))}
-            {Number(fechado.diferenca) === 0 ? ': bateu.' : `, diferença ${brl(fechado.diferenca)}.`}
+            {Number(fechado.diferenca) === 0 ? ': bateu.' : `, diferença ${brl(fechado.diferenca)}.`}{' '}<a href="/caixa/dia">Fechar o dia e imprimir</a>
           </div>
         )}
         <span className="fraco">Seu caixa está fechado.</span>

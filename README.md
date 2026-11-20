@@ -55,6 +55,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 11. `banco/hotel_fase1k.sql`: custo dos produtos e lucro no relatório.
 12. `banco/hotel_fase1l.sql`: troco separado do movimento no fechamento do caixa.
 13. `banco/hotel_fase1m.sql`: campos da ficha de hospedagem (FNRH) e cabeçalho do hotel.
+14. `banco/hotel_fase1n.sql`: fechamento do dia (junta os caixas dos três turnos).
 
 ## Publicar na Vercel
 
