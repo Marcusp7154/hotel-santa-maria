@@ -10,6 +10,9 @@ const CAMPOS_TIPO = [
   { nome: 'hospedes_inclusos', rotulo: 'Pessoas inclusas', tipo: 'numero', passo: '1', padrao: 2, obrigatorio: true },
   { nome: 'valor_hospede_extra', rotulo: 'Pessoa extra', tipo: 'numero', padrao: 0, moeda: true },
   { nome: 'capacidade', rotulo: 'Capacidade máx.', tipo: 'numero', passo: '1', padrao: 2, obrigatorio: true },
+  { nome: 'descricao', rotulo: 'Descrição no site', tipo: 'texto', largo: true },
+  { nome: 'comodidades', rotulo: 'Comodidades (separe por vírgula)', tipo: 'texto', largo: true },
+  { nome: 'no_site', rotulo: 'Aparece no site', tipo: 'check', seFalso: 'Fora do site', padrao: true },
   { nome: 'ativo', rotulo: 'Ativo', tipo: 'check', seFalso: 'Inativo' },
 ];
 

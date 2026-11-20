@@ -68,6 +68,14 @@ export default async function PaginaReserva({ params, searchParams }) {
         <span className={`etiqueta grande ${r.status}`}>{NOME_STATUS_RESERVA[r.status]}</span>
       </div>
 
+      {r.origem === 'site' && r.status === 'pre_reserva' && (
+        <div className="mensagem aviso" style={{ marginBottom: 16 }}>
+          Pedido feito pelo site. O quarto fica segurado até{' '}
+          <b>{r.expira_em ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date(r.expira_em)) : '—'}</b>.
+          Chame o cliente no WhatsApp e, combinado o pagamento, toque em <b>Confirmar reserva</b>.
+          O número do quarto você escolhe abaixo ou na chegada.
+        </div>
+      )}
       {sp?.nova && (
         <div className="mensagem ok" style={{ marginBottom: 16 }}>
           Reserva {r.codigo} salva{hospedado ? ' e check-in feito' : ''}.{' '}

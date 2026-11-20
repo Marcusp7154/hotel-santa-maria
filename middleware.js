@@ -4,6 +4,11 @@ import { SUPABASE_URL, SUPABASE_KEY } from '@/lib/config';
 
 // Renova a sessão a cada página e manda para /login quem não estiver logado
 export async function middleware(request) {
+  // Site público do hotel: aberto para qualquer pessoa, sem login
+  const caminho = request.nextUrl.pathname;
+  if (caminho === '/site' || caminho.startsWith('/site/') || caminho.startsWith('/api/site/')) {
+    return NextResponse.next();
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {

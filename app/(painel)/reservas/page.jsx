@@ -20,7 +20,12 @@ export default async function PaginaReservas({ searchParams }) {
   }
   const aba = ABAS.find((a) => a.id === params?.aba) || ABAS[0];
   const busca = (params?.q || '').trim().slice(0, 60);
+  // pedidos do site vencidos caem antes de montar a lista
+  await supabase.rpc('fn_expirar_pedidos_site');
   const { data: hoje } = await supabase.rpc('fn_hoje');
+  const { data: pedidosSite } = await supabase.from('reservas')
+    .select('id, codigo, data_checkin, data_checkout, adultos, criancas, expira_em, criado_em, hospedes ( nome, telefone ), reserva_quartos ( tipos_quarto ( nome ) )')
+    .eq('origem', 'site').eq('status', 'pre_reserva').order('criado_em');
 
   let consulta = supabase.from('reservas')
     .select(`id, codigo, data_checkin, data_checkout, adultos, criancas, origem, status, observacoes,
@@ -74,6 +79,35 @@ export default async function PaginaReservas({ searchParams }) {
         </div>
         <Link href="/reservas/nova" className="botao primario">+ Nova reserva</Link>
       </div>
+
+      {(pedidosSite || []).length > 0 && (
+        <section className="bloco pedidos-site">
+          <header><h2>Pedidos do site para confirmar</h2><span className="contagem">{pedidosSite.length}</span></header>
+          <p className="nota">Chame o cliente no WhatsApp, combine o pagamento e confirme. Sem confirmação, o pedido cai sozinho no prazo.</p>
+          <ul className="lista-reservas">
+            {pedidosSite.map((r) => {
+              const tel = (r.hospedes?.telefone || '').replace(/\D/g, '');
+              const zap = tel ? `https://wa.me/${tel.length <= 11 ? '55' : ''}${tel}?text=${encodeURIComponent(`Olá, ${r.hospedes?.nome?.split(' ')[0] || ''}! Aqui é do Hotel Santa Maria, sobre o seu pedido de reserva ${r.codigo} de ${dataCurta(r.data_checkin)} a ${dataCurta(r.data_checkout)}.`)}` : null;
+              return (
+                <li key={r.id}>
+                  <div className="linha-reserva">
+                    <span className="lr-quartos"><b>Site</b></span>
+                    <span className="lr-quem">
+                      <Link href={`/reservas/${r.id}`}><b>{r.hospedes?.nome}</b></Link>
+                      <small>{r.codigo} · {r.reserva_quartos?.[0]?.tipos_quarto?.nome} · {dataCurta(r.data_checkin)} a {dataCurta(r.data_checkout)} · {r.adultos + r.criancas} pessoa(s) · {r.hospedes?.telefone}</small>
+                    </span>
+                    <span className="lr-fim">
+                      <small className="fraco">expira {new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date(r.expira_em))}</small>
+                      {zap && <a className="botao" href={zap} target="_blank" rel="noreferrer">WhatsApp</a>}
+                      <Link className="botao primario" href={`/reservas/${r.id}`}>Abrir</Link>
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <div className="filtro-reservas">
         <nav className="abas" style={{ marginBottom: 0 }}>
