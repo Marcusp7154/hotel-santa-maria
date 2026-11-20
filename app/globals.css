@@ -935,3 +935,41 @@ details.periodos .tabela { font-size: 13px; }
 .lucro-resumo .destaque { padding-left: 20px; border-left: 3px solid var(--ok); }
 .lucro-resumo .destaque b { color: var(--ok); font-size: 24px; }
 .lucro-resumo .destaque b.texto-erro { color: var(--erro); }
+
+/* ---------------------------------------------------------------------
+   Visão geral dos quartos
+   --------------------------------------------------------------------- */
+.placar-quartos { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.placar {
+  --p-cor: #0e9f6e;
+  display: grid; gap: 1px; padding: 11px 13px; border-radius: 12px; color: var(--texto);
+  background: var(--superficie); border: 1px solid var(--borda); box-shadow: inset 4px 0 0 var(--p-cor);
+  transition: transform 0.08s, box-shadow 0.12s;
+}
+.placar:hover { color: var(--texto); transform: translateY(-1px); box-shadow: inset 4px 0 0 var(--p-cor), 0 6px 16px -10px rgb(0 0 0 / 0.35); }
+.placar b { font: 800 28px/1 var(--fonte-titulo); color: var(--p-cor); font-variant-numeric: tabular-nums; }
+.placar span { font-weight: 700; font-size: 14px; }
+.placar small { font-size: 12px; color: var(--texto-2); }
+.placar.todos { --p-cor: var(--texto); }
+.placar.sit-ocupado { --p-cor: #c8102e; }
+.placar.sit-reservado { --p-cor: #6d28d9; }
+.placar.sit-sujo { --p-cor: #c99400; }
+.placar.sit-em_limpeza { --p-cor: #ea7a0c; }
+.placar.sit-interditado { --p-cor: #64748b; }
+.placar.ativo { background: var(--p-cor); border-color: var(--p-cor); box-shadow: none; }
+.placar.ativo b, .placar.ativo span, .placar.ativo small { color: #fff; }
+.placar.todos.ativo { background: var(--texto); }
+.placar.todos.ativo b, .placar.todos.ativo span { color: var(--superficie); }
+.placar.zerado { opacity: 0.5; }
+.placar-quartos.compacto { padding: 14px 16px; margin: 0; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.placar-quartos.compacto .placar b { font-size: 24px; }
+.andar { margin-bottom: 22px; }
+.andar h2 { font: 700 15px/1.2 var(--fonte-titulo); margin: 0 0 10px; color: var(--texto-2); }
+.grade-quartos.grande { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 0; }
+.grade-quartos.grande .quarto { min-height: 150px; padding: 14px 15px; }
+.grade-quartos.grande .quarto .numero { font-size: 32px; }
+.quarto-proxima, .quarto-acao {
+  justify-self: start; font-size: 12px; font-weight: 700; color: inherit; padding: 3px 8px; border-radius: 6px;
+  background: var(--q-suave);
+}
+.quarto-proxima:hover, .quarto-acao:hover { color: inherit; text-decoration: underline; }

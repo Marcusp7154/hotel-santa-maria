@@ -42,6 +42,7 @@ export default async function PainelLayout({ children }) {
   const financeiro = gestor || perfil.perfil === 'recepcao';
   const itens = [
     { href: '/', nome: 'Hoje', icone: 'hoje' },
+    { href: '/quartos', nome: 'Visão geral', icone: 'quartos' },
     { href: '/mapa', nome: 'Mapa de ocupação', icone: 'mapa' },
     ...(financeiro ? [{ href: '/reservas', nome: 'Reservas', icone: 'reservas' }] : []),
     ...(financeiro ? [{ href: '/caixa', nome: 'Caixa', icone: 'caixa' }] : []),

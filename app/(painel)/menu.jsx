@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const ICONES = {
   hoje: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  quartos: <><path d="M3 20V9l9-5 9 5v11" /><rect x="7" y="11" width="4" height="4" rx="0.5" /><rect x="13" y="11" width="4" height="4" rx="0.5" /><path d="M10 20v-2.5h4V20" /></>,
   mapa: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 10h18M9 4v16" /></>,
   caixa: <><rect x="2.5" y="6" width="19" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 9.5v5M18 9.5v5" /></>,
   equipe: <><circle cx="9" cy="8" r="3.2" /><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" /><circle cx="17" cy="9" r="2.4" /><path d="M16.5 13.6c2.6.2 4.5 2.1 4.5 4.9" /></>,
