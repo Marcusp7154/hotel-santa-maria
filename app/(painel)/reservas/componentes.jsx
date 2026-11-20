@@ -66,7 +66,9 @@ export function CancelarReserva({ reservaId, temSinal }) {
 
 const CAMPOS_HOSPEDE = [
   ['nome', 'Nome', 'text'], ['telefone', 'Telefone / WhatsApp', 'tel'], ['email', 'E-mail', 'email'],
-  ['numero_documento', 'Documento', 'text'], ['nascimento', 'Nascimento', 'date'], ['cidade', 'Cidade', 'text'], ['uf', 'UF', 'text'],
+  ['numero_documento', 'Documento', 'text'], ['nascimento', 'Nascimento', 'date'], ['nacionalidade', 'Nacionalidade', 'text'],
+  ['endereco', 'Endereço', 'text'], ['cidade', 'Cidade', 'text'], ['uf', 'UF', 'text'], ['pais', 'País', 'text'],
+  ['observacoes', 'Observações', 'text'],
 ];
 
 export function EditarHospede({ hospede }) {
@@ -83,12 +85,14 @@ export function EditarHospede({ hospede }) {
         nome: v.nome.trim().replace(/\s+/g, ' '), telefone: v.telefone.trim() || null, email: v.email.trim() || null,
         numero_documento: doc || null, tipo_documento: doc ? v.tipo_documento : null,
         nascimento: v.nascimento || null, cidade: v.cidade.trim() || null, uf: v.uf.trim().toUpperCase() || null,
+        nacionalidade: v.nacionalidade.trim() || null, endereco: v.endereco.trim() || null, pais: v.pais.trim() || null,
+        observacoes: v.observacoes.trim() || null,
       };
       const r = await rodar((sb) => sb.from('hospedes').update(dados).eq('id', hospede.id));
       if (r.ok) setAberto(false);
     }}>
       {CAMPOS_HOSPEDE.map(([k, rot, tipo]) => (
-        <div className={`campo${k === 'nome' ? ' largo2' : ''}`} key={k}>
+        <div className={`campo${['nome', 'endereco', 'observacoes'].includes(k) ? ' largo2' : ''}`} key={k}>
           <label htmlFor={`eh-${k}`}>{rot}</label>
           {k === 'numero_documento' ? (
             <div className="doc-junto">

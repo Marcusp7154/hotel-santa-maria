@@ -17,6 +17,10 @@ export default async function PaginaNovaReserva({ searchParams }) {
     supabase.from('turnos_caixa').select('id').eq('usuario_id', user.id).is('fechado_em', null).maybeSingle(),
   ]);
   const entrada = dataValida(params?.entrada);
+  const idHospede = /^[0-9a-f-]{36}$/i.test(params?.hospede || '') ? params.hospede : null;
+  const { data: hospede } = idHospede
+    ? await supabase.from('hospedes').select('id, nome, telefone, numero_documento').eq('id', idHospede).maybeSingle()
+    : { data: null };
 
   return (
     <>
@@ -35,6 +39,7 @@ export default async function PaginaNovaReserva({ searchParams }) {
           saida: dataValida(params?.saida),
           quarto: /^[0-9a-f-]{36}$/i.test(params?.quarto || '') ? params.quarto : null,
           origem: params?.origem === 'balcao' ? 'balcao' : null,
+          hospede: hospede || null,
         }}
       />
     </>

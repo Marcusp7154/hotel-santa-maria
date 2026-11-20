@@ -62,7 +62,7 @@ export default async function PaginaReserva({ params, searchParams }) {
         <div>
           <Link href="/reservas" className="voltar">← Reservas</Link>
           <h1>{h?.nome}</h1>
-          <p>Reserva {r.codigo} · feita por {NOME_ORIGEM[r.origem].toLowerCase()}</p>
+          <p>Reserva {r.codigo} · feita por {NOME_ORIGEM[r.origem].toLowerCase()} · <Link href={`/hospedes/${h.id}`}>Ver ficha completa do hóspede</Link></p>
         </div>
         <span className={`etiqueta grande ${r.status}`}>{NOME_STATUS_RESERVA[r.status]}</span>
       </div>
@@ -118,7 +118,7 @@ export default async function PaginaReserva({ params, searchParams }) {
         </section>
 
         <section className="bloco">
-          <header><h2>Hóspede</h2><EditarHospede hospede={h} /></header>
+          <header className="com-edicao"><h2>Hóspede</h2><Link href={`/hospedes/${h.id}`} className="botao primario">Ficha completa</Link><EditarHospede hospede={h} /></header>
           <div className="cartao">
             <div className="linha"><span>Telefone</span><b>{h.telefone || <span className="fraco">não informado</span>}</b></div>
             {h.telefone && (

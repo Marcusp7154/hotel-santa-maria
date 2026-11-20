@@ -980,3 +980,24 @@ details.periodos .tabela { font-size: 13px; }
 .estadia-hora { font-size: 12.5px; font-weight: 700; color: var(--texto-2); margin-top: 2px; }
 .estadia-hora.feito { color: var(--ok); }
 .estadia-hora.feito::before { content: '✓ '; }
+
+/* Ficha do hóspede */
+.ficha-numeros { margin-bottom: 16px; }
+.indicador.alerta .valor { color: var(--erro); }
+.ficha-colunas { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.ficha-dados { margin: 0; padding: 6px 16px 12px; display: grid; }
+.ficha-dado { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--borda); }
+.ficha-dado:last-child { border-bottom: 0; }
+.ficha-dado dt { color: var(--texto-2); font-size: 13px; }
+.ficha-dado dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
+.ficha-dado .falta { color: var(--texto-2); font-weight: 500; font-style: italic; }
+.ficha-hospede .editar-hospede { grid-column: 1 / -1; }
+@media (max-width: 640px) { .ficha-dado { grid-template-columns: 1fr; gap: 2px; } }
+@media print {
+  .ficha-hospede .bloco { break-inside: avoid; }
+  .ficha-hospede .indicador { border: 1px solid #999; }
+}
+.bloco > header.com-edicao { flex-wrap: wrap; gap: 8px; }
+.bloco > header.com-edicao h2 { margin-right: auto; }
+.bloco > header.com-edicao form.editar-hospede { flex-basis: 100%; margin: 6px -16px -12px; }
+@media print { .bloco > header.com-edicao button, .bloco > header.com-edicao .botao { display: none; } }

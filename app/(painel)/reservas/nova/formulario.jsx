@@ -63,7 +63,7 @@ function BuscaHospede({ onEscolher }) {
 
 export function NovaReserva({ hoje, temTurno, inicial }) {
   const router = useRouter();
-  const [hospedeSalvo, setHospedeSalvo] = useState(null);
+  const [hospedeSalvo, setHospedeSalvo] = useState(inicial.hospede || null);
   const [h, setH] = useState(HOSPEDE_VAZIO);
   const [maisDados, setMaisDados] = useState(false);
   const [entrada, setEntrada] = useState(inicial.entrada || hoje);
