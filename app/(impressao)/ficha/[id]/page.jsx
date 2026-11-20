@@ -36,6 +36,10 @@ export default async function FichaImpressa({ params, searchParams }) {
   const { id } = await params;
   const sp = await searchParams;
   const supabase = await createClient();
+  // ficha tem CPF, RG e endereço: só recepção, gerência e administração
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: eu } = await supabase.from('perfis').select('perfil').eq('id', user?.id ?? '').maybeSingle();
+  if (!['admin', 'gerente', 'recepcao'].includes(eu?.perfil)) notFound();
   const [{ data: h }, { data: hoje }, { data: hotel }] = await Promise.all([
     supabase.from('hospedes').select('*').eq('id', id).maybeSingle(),
     supabase.rpc('fn_hoje'),

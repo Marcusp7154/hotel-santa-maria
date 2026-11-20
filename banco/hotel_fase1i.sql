@@ -17,9 +17,12 @@ alter table public.pagamentos
   add column if not exists hospedagem boolean not null default false;
 comment on column public.pagamentos.hospedagem is 'Verdadeiro quando o pagamento é da hospedagem (sinal ou diárias pagas na entrada).';
 
--- Sinais já recebidos antes desta fase também são de hospedagem
+-- Sinais já recebidos antes desta fase também são de hospedagem.
+-- Pagamentos não podem ser alterados; a trava sai só durante este ajuste.
+alter table public.pagamentos disable trigger trg_imutavel;
 update public.pagamentos set hospedagem = true
  where motivo = 'Sinal da reserva' and not hospedagem;
+alter table public.pagamentos enable trigger trg_imutavel;
 
 -- Estorno de um pagamento de hospedagem também é de hospedagem
 create or replace function public.fn_estorno_herda_hospedagem()

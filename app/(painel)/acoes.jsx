@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { brl, NOME_FORMA, NOME_STATUS_QUARTO } from '@/lib/formato';
@@ -24,6 +24,13 @@ const ERROS = [
   ['hospedes_documento_unico', 'Já existe um hóspede com este documento.'],
   ['violates foreign key constraint', 'Não dá para apagar: este registro já está em uso. Desative em vez de apagar.'],
   ['row-level security', 'Sem permissão para isso.'],
+  ['violates check constraint', 'Algum valor não é aceito (por exemplo, número negativo ou zero). Confira os campos.'],
+  ['invalid input syntax', 'Algum campo tem um valor inválido. Confira números e datas.'],
+  ['Failed to fetch', 'Sem conexão com a internet. Confira a rede e tente de novo.'],
+  ['NetworkError', 'Sem conexão com a internet. Confira a rede e tente de novo.'],
+  ['JWT expired', 'Sua sessão expirou. Saia e entre de novo.'],
+  ['Could not find the function', 'O banco ainda não tem esta função. Rode o script mais recente no Supabase.'],
+  ['schema cache', 'O banco ainda não tem esta parte. Rode o script mais recente no Supabase.'],
 ];
 
 export function traduzirErro(mensagem = '') {
@@ -36,8 +43,12 @@ export function useAcao() {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState(null);
+  // trava contra clique duplo: o segundo clique chega antes de o botão ficar desativado
+  const rodando = useRef(false);
 
   async function rodar(chamada) {
+    if (rodando.current) return { ok: false, repetido: true };
+    rodando.current = true;
     setOcupado(true);
     setErro(null);
     try {
@@ -52,6 +63,7 @@ export function useAcao() {
       setErro(e.message || 'Erro inesperado.');
       return { ok: false };
     } finally {
+      rodando.current = false;
       setOcupado(false);
     }
   }

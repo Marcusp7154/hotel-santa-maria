@@ -56,6 +56,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 12. `banco/hotel_fase1l.sql`: troco separado do movimento no fechamento do caixa.
 13. `banco/hotel_fase1m.sql`: campos da ficha de hospedagem (FNRH) e cabeçalho do hotel.
 14. `banco/hotel_fase1n.sql`: fechamento do dia (junta os caixas dos três turnos).
+15. `banco/hotel_fase1o.sql`: correções de segurança (preço vem do cadastro, conta só fecha com saldo zero, custo das perdas).
 
 ## Publicar na Vercel
 
@@ -119,3 +120,15 @@ lib/
   supabase/             conexão com o Supabase (navegador, servidor e admin)
 middleware.js           mantém a sessão e protege as páginas
 ```
+
+
+## Testes do banco
+
+Os testes ficam em `banco/testes/`. Eles criam um banco novo num PostgreSQL local, aplicam os
+scripts na ordem acima e conferem as regras (permissões, caixa, reservas, estoque, lucro...).
+
+```bash
+PGPORT=5432 ./banco/testes/rodar_testes.sh
+```
+
+No fim aparece `TUDO OK` ou a lista do que falhou.
