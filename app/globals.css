@@ -1049,3 +1049,82 @@ details.periodos .tabela { font-size: 13px; }
 .seletor-tema button:hover { color: var(--texto); background: var(--superficie-2); }
 .seletor-tema button.ativo { background: var(--marca); color: var(--sobre-marca); }
 @media (max-width: 640px) { .seletor-tema button span { display: none; } .seletor-tema button { padding: 6px 9px; } }
+
+/* ---------------------------------------------------------------------
+   Hoje: abas grandes + lista compacta + coluna lateral
+   --------------------------------------------------------------------- */
+.hoje-cabecalho h1 { font-size: 30px; }
+.hoje-grade { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.hoje-lado { display: grid; gap: 16px; position: sticky; top: 16px; }
+.painel-hoje { display: grid; gap: 12px; min-width: 0; }
+.hoje-abas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hoje-aba {
+  --a-cor: var(--marca);
+  all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; border-radius: 16px; background: var(--superficie); border: 1px solid var(--borda);
+  position: relative; overflow: hidden; transition: transform 0.08s, box-shadow 0.15s, background 0.15s;
+}
+.hoje-aba::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--a-cor); }
+.hoje-aba:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -16px rgb(0 0 0 / 0.45); }
+.hoje-aba:focus-visible { outline: 2px solid var(--a-cor); outline-offset: 2px; }
+.hoje-aba.cor-roxo { --a-cor: #6d28d9; }
+.hoje-aba.cor-ambar { --a-cor: #e08a00; }
+.hoje-aba.cor-marca { --a-cor: #c8102e; }
+.hoje-aba-num { font: 800 40px/1 var(--fonte-titulo); color: var(--a-cor); font-variant-numeric: tabular-nums; min-width: 44px; }
+.hoje-aba-txt { display: grid; gap: 2px; min-width: 0; }
+.hoje-aba-txt b { font-size: 16px; }
+.hoje-aba-txt small { font-size: 13px; color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hoje-aba.ativa { background: var(--a-cor); border-color: var(--a-cor); box-shadow: 0 14px 28px -18px var(--a-cor); }
+.hoje-aba.ativa::before { display: none; }
+.hoje-aba.ativa .hoje-aba-num, .hoje-aba.ativa b, .hoje-aba.ativa small { color: #fff; }
+.hoje-lista { padding: 0; }
+.hoje-busca { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--borda); }
+.hoje-busca input { flex: 1; padding: 9px 12px; background: var(--superficie-2); }
+.hoje-linhas { list-style: none; margin: 0; padding: 0; }
+.hoje-linhas li + li { border-top: 1px solid var(--borda); }
+.linha-hoje { transition: background 0.12s; }
+.linha-hoje:hover, .linha-hoje.aberta { background: var(--superficie-2); }
+.linha-hoje.destaque-alerta { box-shadow: inset 4px 0 0 var(--alerta); }
+.lh-topo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto auto; gap: 12px; align-items: center; padding: 11px 14px; }
+.lh-quartos { display: flex; gap: 4px; flex-wrap: wrap; max-width: 110px; }
+.lh-quartos b {
+  font: 800 18px/1 var(--fonte-titulo); min-width: 46px; text-align: center; padding: 8px 6px; border-radius: 10px;
+  background: var(--marca-tinta); color: var(--marca);
+}
+.lh-texto { display: grid; min-width: 0; gap: 2px; }
+.lh-nome { font-weight: 750; font-size: 15px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+a.lh-nome:hover { color: var(--marca); }
+.lh-texto small { color: var(--texto-2); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lh-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.lh-valor .saldo { white-space: nowrap; }
+.lh-acao:empty { display: none; }
+.lh-acao .acoes { margin: 0; }
+.lh-mais {
+  display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; min-height: 0; border-radius: 8px;
+  background: transparent; border: 1px solid var(--borda-forte); box-shadow: none; font-size: 13px; font-weight: 650;
+}
+.lh-corpo { padding: 4px 14px 14px 72px; display: grid; gap: 12px; }
+.lh-grupo { display: grid; gap: 6px; }
+.lh-grupo > b { font-size: 13px; color: var(--texto-2); }
+.placar-quartos.lado { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px 14px 14px; margin: 0; gap: 8px; }
+.placar-quartos.lado .placar { padding: 9px 11px; }
+.placar-quartos.lado .placar b { font-size: 22px; }
+.hoje-auditoria .nota { margin: 0; padding: 10px 16px; }
+@media (max-width: 1100px) {
+  .hoje-grade { grid-template-columns: 1fr; }
+  .hoje-lado { position: static; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+}
+@media (max-width: 760px) {
+  .hoje-abas { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .hoje-aba { flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px; }
+  .hoje-aba-num { font-size: 30px; }
+  .hoje-aba-txt small { display: none; }
+  .hoje-aba-txt b { font-size: 14px; }
+  .lh-topo { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .lh-chips { grid-column: 2 / -1; justify-content: flex-start; }
+  .lh-valor { grid-column: 2; }
+  .lh-acao { grid-column: 2 / 3; }
+  .lh-mais { grid-column: 3; grid-row: 1; }
+  .lh-mais-txt { display: none; }
+  .lh-corpo { padding-left: 14px; }
+}
