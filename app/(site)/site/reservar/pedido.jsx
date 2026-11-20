@@ -47,7 +47,7 @@ export function EscolherQuarto({ tipo, entrada, saida, adultos, criancas, noites
       <div className="s-opcao-cabeca">
         <div>
           <h3>{tipo.nome}</h3>
-          <span className="s-cap">até {tipo.capacidade} pessoa{tipo.capacidade > 1 ? 's' : ''} por quarto{tipo.quartos > 1 ? ` · ${tipo.quartos} quartos` : ''}</span>
+          <span className="s-cap">até {tipo.capacidade} pessoa{tipo.capacidade > 1 ? 's' : ''}</span>
         </div>
         <div className="s-preco">
           <b>{brl(tipo.total)}</b>

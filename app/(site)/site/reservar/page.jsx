@@ -1,4 +1,4 @@
-import { disponibilidade, infoDoHotel } from '@/lib/site';
+import { disponibilidade, infoDoHotel, linkWhatsApp } from '@/lib/site';
 import { BuscaDatas } from '../busca-datas';
 import { EscolherQuarto } from './pedido';
 
@@ -26,6 +26,7 @@ export default async function Reservar({ searchParams }) {
   const livres = (resultado?.tipos || []).filter((t) => t.disponivel);
   const lotados = (resultado?.tipos || []).filter((t) => !t.disponivel);
   // o tipo escolhido na página inicial aparece primeiro
+  const zap = linkWhatsApp(hotel?.telefone, `Olá! Queria reservar para ${adultos + criancas} pessoas${entrada && saida ? ` de ${dataBR(entrada)} a ${dataBR(saida)}` : ''}.`);
   livres.sort((a, b) => Number(b.tipo_id === tipoPreferido) - Number(a.tipo_id === tipoPreferido));
 
   return (
@@ -42,9 +43,15 @@ export default async function Reservar({ searchParams }) {
             {dataBR(entrada)} a {dataBR(saida)} · {noites} noite{noites > 1 ? 's' : ''} · {adultos} adulto{adultos > 1 ? 's' : ''}
             {criancas ? `, ${criancas} criança${criancas > 1 ? 's' : ''}` : ''}
           </p>
-          {livres.length === 0 && (
+          {(resultado.tipos || []).length === 0 && (
             <div className="s-aviso">
-              Não há quartos livres para essas datas. Tente outras datas ou fale com a recepção pelo WhatsApp.
+              Não temos quarto para {adultos + criancas} pessoas juntas. Para grupos, fale com a recepção
+              {zap ? <> pelo <a href={zap} target="_blank" rel="noreferrer">WhatsApp</a></> : ' pelo WhatsApp'}: dá para combinar mais de um quarto.
+            </div>
+          )}
+          {(resultado.tipos || []).length > 0 && livres.length === 0 && (
+            <div className="s-aviso">
+              Não há quartos livres para {adultos + criancas} pessoa{adultos + criancas > 1 ? 's' : ''} nessas datas. Tente outras datas ou fale com a recepção pelo WhatsApp.
             </div>
           )}
           <div className="s-opcoes">

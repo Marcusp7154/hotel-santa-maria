@@ -6,6 +6,7 @@ insert into public.tipos_quarto (id, hotel_id, nome, valor_base, hospedes_inclus
 values ('99999999-0000-0000-0000-0000000000b1', 'aaaaaaaa-0000-0000-0000-000000000000', 'Teste 1q', 100, 2, 0, 2);
 insert into public.quartos (hotel_id, numero, tipo_quarto_id, status) values ('aaaaaaaa-0000-0000-0000-000000000000', 'Q1', '99999999-0000-0000-0000-0000000000b1', 'limpo');
 create temp table ck (j jsonb); grant all on ck to authenticated;
+create temp table pr (j jsonb); grant all on pr to service_role;
 set role authenticated;
 set request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000001';
 select set_config('request.jwt.claim.sub', coalesce((select usuario_id::text from public.fn_caixa_aberto() limit 1), 'a0000000-0000-0000-0000-000000000001'), false);
@@ -28,6 +29,12 @@ reset role;
 -- site: grupo grande demais para o tipo não aparece como "lotado"
 set role service_role; reset request.jwt.claim.sub;
 select public.t(3,'site esconde tipo que não comporta o grupo', not exists (select 1 from jsonb_array_elements(public.fn_site_disponibilidade(public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+50, public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+51, 3)) x where x->>'nome'='Teste 1q'));
+select public.t(3,'site mostra o tipo para quem cabe nele', exists (select 1 from jsonb_array_elements(public.fn_site_disponibilidade(public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+50, public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+51, 2)) x where x->>'nome'='Teste 1q'));
+update public.tipos_quarto set no_site = true where id='99999999-0000-0000-0000-0000000000b1';
+select public.t(3,'4 pessoas não veem quarto de 2', not exists (select 1 from jsonb_array_elements(public.fn_site_disponibilidade(public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+50, public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+51, 4)) x where (x->>'capacidade')::int < 4));
+select public.espera_erro(3,'pedido de 3 pessoas num quarto de 2 é recusado', $$select public.fn_site_pre_reserva(jsonb_build_object('tipo_id','99999999-0000-0000-0000-0000000000b1','data_checkin', public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+50,'data_checkout', public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+51,'adultos',3,'nome','Grupo Grande','telefone','99911112222'))$$);
+insert into pr select public.fn_site_pre_reserva(jsonb_build_object('tipo_id','99999999-0000-0000-0000-0000000000b1','data_checkin', public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+50,'data_checkout', public.fn_hoje('aaaaaaaa-0000-0000-0000-000000000000')+51,'adultos',2,'nome','Casal Teste','telefone','99933334444')) j;
+select public.t(3,'pedido de 2 pessoas gera um quarto só', (select count(*)=1 from public.reserva_quartos rq join public.reservas r on r.id=rq.reserva_id where r.codigo=(select j->>'codigo' from pr)));
 reset role;
 select passo, teste, case when ok then 'OK' else 'FALHOU' end, left(coalesce(detalhe,''),150) from public.t_res order by passo;
 rollback;

@@ -60,7 +60,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 14. `banco/hotel_fase1n.sql`: fechamento do dia (junta os caixas dos três turnos).
 15. `banco/hotel_fase1o.sql`: correções de segurança (preço vem do cadastro, conta só fecha com saldo zero, custo das perdas).
 16. `banco/hotel_fase1p.sql`: site público (disponibilidade e pré-reserva pelo cliente).
-17. `banco/hotel_fase1q.sql`: libera o quarto quando o hóspede sai antes (ou no mesmo dia) e o site deixa de mostrar "lotado" para tipos que não comportam o grupo.
+17. `banco/hotel_fase1q.sql`: libera o quarto quando o hóspede sai antes (ou no mesmo dia) e o site só oferece quartos onde o grupo inteiro cabe.
 
 ## Publicar na Vercel
 
