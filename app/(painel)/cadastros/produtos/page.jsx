@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { brl } from '@/lib/formato';
+import { GRUPOS_INTERNO, NOME_MOV, qtd } from '@/lib/estoque';
 import { MovimentarEstoque, RegistroForm } from '../formularios';
 
 export const dynamic = 'force-dynamic';
@@ -7,22 +8,23 @@ export const dynamic = 'force-dynamic';
 const CAMPOS = [
   { nome: 'nome', rotulo: 'Produto', tipo: 'texto', obrigatorio: true, largo: true, papel: 'titulo' },
   {
-    nome: 'categoria', rotulo: 'Categoria', tipo: 'select', obrigatorio: true, padrao: 'frigobar', papel: 'chip',
-    opcoes: [['frigobar', 'Frigobar'], ['restaurante', 'Restaurante'], ['lavanderia', 'Lavanderia'], ['servico', 'Serviço'], ['outro', 'Outro']],
-    cores: { frigobar: 'azul', restaurante: 'ambar', lavanderia: 'verde', servico: 'roxo', outro: 'neutro' },
+    nome: 'finalidade', rotulo: 'Finalidade', tipo: 'select', obrigatorio: true, padrao: 'revenda', papel: 'chip',
+    opcoes: [['revenda', 'Revenda (vende na recepção)'], ['interno', 'Uso interno (só estoque)']],
+    cores: { revenda: 'azul', interno: 'verde' },
   },
-  { nome: 'preco', rotulo: 'Preço de venda', tipo: 'numero', obrigatorio: true, moeda: true },
+  {
+    nome: 'categoria', rotulo: 'Categoria (revenda)', tipo: 'select', obrigatorio: true, padrao: 'frigobar',
+    opcoes: [['frigobar', 'Frigobar'], ['restaurante', 'Restaurante'], ['lavanderia', 'Lavanderia'], ['servico', 'Serviço'], ['outro', 'Outro']],
+  },
+  { nome: 'grupo', rotulo: 'Grupo (uso interno)', tipo: 'select', opcoes: GRUPOS_INTERNO },
+  { nome: 'preco', rotulo: 'Preço de venda', tipo: 'numero', moeda: true, padrao: 0 },
   { nome: 'custo', rotulo: 'Custo de compra', tipo: 'numero', moeda: true },
+  { nome: 'unidade', rotulo: 'Unidade', tipo: 'texto', padrao: 'un' },
   { nome: 'estoque_minimo', rotulo: 'Estoque mínimo', tipo: 'numero', passo: '1', padrao: 0 },
   { nome: 'controla_estoque', rotulo: 'Controlar estoque', tipo: 'check', seFalso: 'Sem controle de estoque' },
-  { nome: 'ativo', rotulo: 'À venda', tipo: 'check', seFalso: 'Fora de venda' },
+  { nome: 'ativo', rotulo: 'Ativo', tipo: 'check', seFalso: 'Desativado' },
 ];
 
-const NOME_MOV = {
-  entrada: 'Entrada', venda: 'Venda', estorno_venda: 'Estorno de venda', ajuste: 'Ajuste', perda: 'Perda',
-};
-
-const qtd = (n) => Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
 const quando = (ts) => new Intl.DateTimeFormat('pt-BR', {
   day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
 }).format(new Date(ts));
@@ -50,41 +52,48 @@ export default async function CadastroProdutos() {
       )}
 
       <section className="bloco">
-        <header><h2>Produtos vendidos na recepção</h2><span className="contagem">{produtos.length}</span></header>
+        <header><h2>Produtos</h2><span className="contagem">{produtos.length}</span></header>
         <p className="nota">
-          Produto novo começa com estoque zero: depois de adicionar, lance a entrada logo abaixo dele.
-          O estoque baixa sozinho a cada venda e volta se a venda for estornada.
-          Mudar o preço vale só para as próximas vendas. O custo de compra serve para o relatório de lucro:
-          ao lançar uma entrada com custo, ele é recalculado sozinho (custo médio).
+          <b>Revenda</b> é o que se vende na recepção (frigobar, balcão). <b>Uso interno</b> é o que só fica no estoque:
+          limpeza, café da manhã, lavanderia… — não aparece na venda e sai pela retirada em Estoque.
+          O jeito mais fácil de dar entrada é pela <a href="/estoque/nota">nota do fornecedor (XML)</a>: o custo é
+          recalculado sozinho (custo médio).
         </p>
         <RegistroForm tabela="produtos" campos={CAMPOS} rotuloNovo="Novo produto" rotuloSalvar="Adicionar produto" />
-        {produtos.length > 0 && (
-          <div className="registros">
-            {produtos.map((p) => {
-              const baixo = p.controla_estoque && Number(p.estoque_atual) <= Number(p.estoque_minimo);
-              return (
-                <RegistroForm
-                  key={p.id} tabela="produtos" id={p.id} inicial={p} campos={CAMPOS}
-                  destaque={<>
-                    {p.custo != null && Number(p.preco) > 0 && (
-                      <span className="chip cor-verde" title="Lucro por unidade">
-                        lucro {brl(Number(p.preco) - Number(p.custo))} ({Math.round(((Number(p.preco) - Number(p.custo)) / Number(p.preco)) * 100)}%)
-                      </span>
-                    )}
-                    {p.controla_estoque ? (
-                      <span className={`estoque-selo${baixo ? ' baixo' : ''}`} title={baixo ? 'Abaixo do mínimo' : 'Em estoque'}>
-                        <b>{qtd(p.estoque_atual)}</b><small>{baixo ? 'baixo' : 'em estoque'}</small>
-                      </span>
-                    ) : null}
-                  </>}
-                >
-                  {p.controla_estoque ? <MovimentarEstoque produtoId={p.id} /> : null}
-                </RegistroForm>
-              );
-            })}
-          </div>
-        )}
       </section>
+      {[['revenda', 'Revenda'], ['interno', 'Uso interno']].map(([fin, titulo]) => {
+        const lista = produtos.filter((p) => (p.finalidade || 'revenda') === fin);
+        if (!lista.length) return null;
+        return (
+          <section className="bloco" key={fin}>
+            <header><h2>{titulo}</h2><span className="contagem">{lista.length}</span></header>
+            <div className="registros">
+              {lista.map((p) => {
+                const baixo = p.controla_estoque && Number(p.estoque_atual) <= Number(p.estoque_minimo);
+                return (
+                  <RegistroForm
+                    key={p.id} tabela="produtos" id={p.id} inicial={p} campos={CAMPOS}
+                    destaque={<>
+                      {fin === 'revenda' && p.custo != null && Number(p.preco) > 0 && (
+                        <span className="chip cor-verde" title="Lucro por unidade">
+                          lucro {brl(Number(p.preco) - Number(p.custo))} ({Math.round(((Number(p.preco) - Number(p.custo)) / Number(p.preco)) * 100)}%)
+                        </span>
+                      )}
+                      {p.controla_estoque ? (
+                        <span className={`estoque-selo${baixo ? ' baixo' : ''}`} title={baixo ? 'Abaixo do mínimo' : 'Em estoque'}>
+                          <b>{qtd(p.estoque_atual)}</b><small>{baixo ? 'baixo' : p.unidade || 'em estoque'}</small>
+                        </span>
+                      ) : null}
+                    </>}
+                  >
+                    {p.controla_estoque ? <MovimentarEstoque produtoId={p.id} /> : null}
+                  </RegistroForm>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
 
       <section className="bloco">
         <header><h2>Últimos movimentos de estoque</h2></header>

@@ -50,6 +50,7 @@ export default async function PainelLayout({ children }) {
     gestor
       ? { href: '/funcionarios', nome: 'Funcionários', icone: 'equipe' }
       : { href: '/funcionarios/escala', nome: 'Escala', icone: 'escala' },
+    { href: '/estoque', nome: 'Estoque', icone: 'estoque' },
     ...(gestor ? [{ href: '/relatorios', nome: 'Relatórios', icone: 'relatorios' }] : []),
     ...(gestor ? [{ href: '/cadastros', nome: 'Cadastros', icone: 'cadastros' }] : []),
   ];

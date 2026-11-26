@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { brl, dataCurta, NOME_FORMA, noites, textoEntrada, textoSaida } from '@/lib/formato';
 import { BotaoImprimir, LancarConsumo, ReceberNota } from '../../acoes';
+import { paraVenda } from '@/lib/produtos';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default async function Notinha({ params }) {
       .select('id, forma, valor, lancamento_id, estorno_de, hospedagem, motivo, criado_em')
       .eq('conta_id', id).order('criado_em'),
     supabase.from('hoteis').select('nome, cnpj, endereco, cidade, uf, telefone, hora_checkin, hora_checkout').maybeSingle(),
-    supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome'),
+    supabase.from('produtos').select('*').eq('ativo', true).order('nome'),
     supabase.from('turnos_caixa').select('id').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle(),
   ]);
 
@@ -204,7 +205,7 @@ export default async function Notinha({ params }) {
                              saldo={saldo} hospedagem={hospPaga ? 0 : hospFalta} temTurno={!!turnoR.data} />
               </div>
             )}
-            <LancarConsumo contaId={conta.id} produtos={produtosR.data || []} temTurno={!!turnoR.data} />
+            <LancarConsumo contaId={conta.id} produtos={paraVenda(produtosR.data)} temTurno={!!turnoR.data} />
           </div>
         </section>
       )}

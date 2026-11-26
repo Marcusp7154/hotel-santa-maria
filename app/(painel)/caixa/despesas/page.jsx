@@ -59,6 +59,13 @@ export default async function Despesas({ searchParams }) {
         <AbasCaixa />
       </div>
 
+      {gestor && (
+        <div className="atalho-nota">
+          <span><b>Compra com nota fiscal?</b> Lance pelo XML: os produtos entram no estoque e a despesa é lançada sozinha.</span>
+          <Link href="/estoque/nota" className="botao primario">Lançar nota (XML)</Link>
+        </div>
+      )}
+
       <section className="indicadores" style={{ marginBottom: 0 }}>
         <div className="indicador"><div className="valor">{brl(total)}</div><div className="rotulo">Despesas em {nomeMes(mes)}</div></div>
         <div className="indicador"><div className="valor">{brl(daGaveta)}</div><div className="rotulo">Pagas com dinheiro do caixa</div></div>
@@ -107,6 +114,7 @@ export default async function Despesas({ searchParams }) {
                     <td>
                       {d.descricao}
                       {d.fornecedor && <small className="fraco" style={{ display: 'block' }}>{d.fornecedor}</small>}
+                      {d.nota_id && gestor && <small style={{ display: 'block' }}><Link href={`/estoque/nota/${d.nota_id}`}>ver nota</Link></small>}
                       {d.cancelada_em && <small style={{ display: 'block' }}>Cancelada: {d.motivo_cancelamento}</small>}
                     </td>
                     <td>{d.forma === 'dinheiro' ? 'Dinheiro do caixa' : NOME_FORMA[d.forma]}</td>

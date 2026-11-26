@@ -6,6 +6,7 @@ import {
 } from './acoes';
 import { LinhaHoje, PainelHoje } from './painel-hoje';
 import { situacaoDosQuartos, SITUACOES } from './quartos/situacao';
+import { paraVenda } from '@/lib/produtos';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ export default async function Hoje() {
       .eq('status', 'hospedado').order('data_checkout'),
     supabase.from('quartos').select('id, numero, andar, status, tipo_quarto_id, tipos_quarto ( nome )').eq('ativo', true),
     financeiro ? supabase.from('v_contas_saldo').select('conta_id, reserva_id, saldo').eq('status', 'aberta') : { data: [] },
-    financeiro ? supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome') : { data: [] },
+    financeiro ? supabase.from('produtos').select('*').eq('ativo', true).order('nome') : { data: [] },
     financeiro ? supabase.from('turnos_caixa').select('id, aberto_em').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle() : { data: null },
     financeiro ? supabase.rpc('fn_caixa_aberto') : { data: [] },
     financeiro ? supabase.rpc('fn_hospedagem_resumo') : { data: [] },
@@ -56,7 +57,7 @@ export default async function Hoje() {
   const ficam = hospedados.filter((r) => r.data_checkout > hoje);
   const quartos = (quartosR.data || []).sort(ordenarQuartos);
   const contas = saldosR.data || [];
-  const produtos = produtosR.data || [];
+  const produtos = paraVenda(produtosR.data);
   const turno = turnoR.data;
 
   let resumoTurno = [];

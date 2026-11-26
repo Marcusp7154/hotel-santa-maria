@@ -4,6 +4,7 @@ import { horaDe } from '@/lib/caixa';
 import { contexto, SemAcesso } from '../../funcionarios/acesso';
 import { AbasCaixa } from '../componentes';
 import { CancelarVenda, Pdv } from './pdv';
+import { paraVenda } from '@/lib/produtos';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export default async function Vender() {
     return <SemAcesso texto="Vendas no balcão são da recepção, gerência e administração." />;
   }
   const [prodR, turnoR] = await Promise.all([
-    supabase.from('produtos').select('id, nome, preco, controla_estoque, estoque_atual').eq('ativo', true).order('nome'),
+    supabase.from('produtos').select('*').eq('ativo', true).order('nome'),
     supabase.from('turnos_caixa').select('id, aberto_em').eq('usuario_id', user.id).is('fechado_em', null).maybeSingle(),
   ]);
   const turno = turnoR.data;
@@ -45,7 +46,7 @@ export default async function Vender() {
       <AbasCaixa />
 
       <section className="bloco">
-        <Pdv produtos={prodR.data || []} temTurno={Boolean(turno)} />
+        <Pdv produtos={paraVenda(prodR.data)} temTurno={Boolean(turno)} />
       </section>
 
       {turno && (
