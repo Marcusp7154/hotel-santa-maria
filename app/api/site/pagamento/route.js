@@ -75,8 +75,10 @@ export async function POST(request) {
   } catch (e) {
     await sb.rpc('fn_site_cobranca_gravar', { p_id: cob.id, p_ok: false });
     const chave = e?.status === 401 || e?.status === 403;
-    return responder({ erro: chave
+    const base = chave
       ? 'Pagamento pelo site indisponível no momento (configuração do Mercado Pago). Fale com a recepção.'
-      : 'O Mercado Pago não respondeu. Tente de novo em instantes.' }, 502);
+      : e?.status ? 'O Mercado Pago recusou o pagamento. Tente de novo ou fale com a recepção.' : 'O Mercado Pago não respondeu. Tente de novo em instantes.';
+    // código e motivo do Mercado Pago (sem dados sigilosos), para a recepção entender o problema
+    return responder({ erro: base, detalhe: e?.status ? `MP ${e.status}${e.detalhe ? ` · ${e.detalhe}` : ''}` : null }, 502);
   }
 }

@@ -73,7 +73,7 @@ export function PagarSinal({ codigo, token, sinal, total, percentual, temEmail, 
         body: JSON.stringify({ codigo, token, tipo, email: email.trim() || null }),
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setErro(d.erro || 'Não foi possível iniciar o pagamento. Tente de novo.'); return; }
+      if (!r.ok) { setErro(`${d.erro || 'Não foi possível iniciar o pagamento. Tente de novo.'}${d.detalhe ? ` (${d.detalhe})` : ''}`); return; }
       if (d.tipo === 'cartao' && d.link) { saindo = true; window.location.href = d.link; return; }
       setPix({ qr_code: d.qr, qr_base64: d.qr64, expira_em: d.expira_em, valor: d.valor });
       voltas.current = 0;
