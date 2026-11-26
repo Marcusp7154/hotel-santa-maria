@@ -8,7 +8,7 @@ export function AbasEstoque({ gestor }) {
   const abas = [
     ['/estoque', 'Uso interno', (c) => c === '/estoque'],
     ...(gestor ? [
-      ['/estoque/nota', 'Lançar nota (XML)', (c) => c === '/estoque/nota'],
+      ['/estoque/nota', 'Lançar nota', (c) => c === '/estoque/nota'],
       ['/estoque/notas', 'Notas lançadas', (c) => c === '/estoque/notas' || /^\/estoque\/nota\/[0-9a-f-]{36}$/.test(c)],
     ] : []),
   ];

@@ -61,8 +61,8 @@ export default async function Despesas({ searchParams }) {
 
       {gestor && (
         <div className="atalho-nota">
-          <span><b>Compra com nota fiscal?</b> Lance pelo XML: os produtos entram no estoque e a despesa é lançada sozinha.</span>
-          <Link href="/estoque/nota" className="botao primario">Lançar nota (XML)</Link>
+          <span><b>Compra com nota fiscal?</b> Lance pelo XML, PDF ou foto: os produtos entram no estoque e a despesa é lançada sozinha.</span>
+          <Link href="/estoque/nota" className="botao primario">Lançar nota</Link>
         </div>
       )}
 

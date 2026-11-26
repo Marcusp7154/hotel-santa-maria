@@ -62,6 +62,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 16. `banco/hotel_fase1p.sql`: site público (disponibilidade e pré-reserva pelo cliente).
 17. `banco/hotel_fase1q.sql`: libera o quarto quando o hóspede sai antes (ou no mesmo dia) e o site só oferece quartos onde o grupo inteiro cabe.
 18. `banco/hotel_fase1r.sql`: nota de entrada pelo XML (estoque + despesa automáticos) e estoque de uso interno com retirada.
+19. `banco/hotel_fase1s.sql`: nota de entrada lida do PDF ou da foto pela inteligência artificial (guarda a origem da nota).
 
 ## Publicar na Vercel
 
@@ -88,6 +89,16 @@ Toda alteração enviada ao GitHub é publicada automaticamente pela Vercel em c
    - Em *Deployments*, nos três pontinhos do último deploy, clique em *Redeploy* para a chave valer.
 3. **Fechar o cadastro público**: no Supabase, *Authentication > Sign In / Providers*, desligue
    *Allow new users to sign up*. Assim só o administrador cria logins.
+
+## Leitura de nota por PDF ou foto (inteligência artificial)
+
+1. Em [platform.claude.com](https://platform.claude.com), na conta com créditos, crie uma **API key** (*API Keys > Create Key*).
+   Não compartilhe essa chave com ninguém nem coloque no código.
+2. Na Vercel, *Settings > Environment Variables > Add*: nome `ANTHROPIC_API_KEY`, valor = a chave,
+   ambientes *Production* e *Preview*. Salve e faça *Redeploy*.
+3. Opcional: `ANTHROPIC_MODEL` troca o modelo (padrão `claude-sonnet-5-5`; `claude-haiku-5-5` é mais barato).
+
+Sem a chave, o XML continua funcionando normalmente; só o PDF e a foto avisam que falta configurar.
 
 ## Rodar no próprio computador (opcional)
 

@@ -1473,3 +1473,20 @@ a.lh-nome:hover { color: var(--marca); }
   .lista-estoque li { grid-template-columns: auto minmax(0, 1fr); }
   .lista-estoque li > :last-child { grid-column: 1 / -1; justify-self: start; }
 }
+.mensagem.info { background: var(--info-suave); color: var(--texto); }
+input.invalido { border-color: var(--alerta); }
+.nota-camera { justify-self: center; position: relative; }
+.nota-camera.desativado { opacity: .5; pointer-events: none; }
+.nota-ajuda p { margin: 0 0 6px; }
+.nota-cabeca-campos { flex: 1 1 520px; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 14px; }
+.nota-cabeca-campos .campo.largo { grid-column: span 2; }
+.nota-cabeca-campos input { width: 100%; min-width: 0; }
+.nota-item-edita { grid-column: 2 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 80px 70px 110px auto; gap: 8px; align-items: end; }
+.nota-item-edita label { display: grid; gap: 3px; font-size: 12px; font-weight: 600; color: var(--texto-2); }
+.nota-item-edita input { width: 100%; min-width: 0; }
+@media (max-width: 640px) {
+  .nota-cabeca-campos .campo.largo { grid-column: 1 / -1; }
+  .nota-item-edita { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .nota-item-edita > input { grid-column: 1 / -1; }
+  .nota-item-edita > button { grid-column: 1 / -1; justify-self: start; }
+}

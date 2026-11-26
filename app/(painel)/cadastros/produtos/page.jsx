@@ -56,7 +56,7 @@ export default async function CadastroProdutos() {
         <p className="nota">
           <b>Revenda</b> é o que se vende na recepção (frigobar, balcão). <b>Uso interno</b> é o que só fica no estoque:
           limpeza, café da manhã, lavanderia… — não aparece na venda e sai pela retirada em Estoque.
-          O jeito mais fácil de dar entrada é pela <a href="/estoque/nota">nota do fornecedor (XML)</a>: o custo é
+          O jeito mais fácil de dar entrada é pela <a href="/estoque/nota">nota do fornecedor</a>: o custo é
           recalculado sozinho (custo médio).
         </p>
         <RegistroForm tabela="produtos" campos={CAMPOS} rotuloNovo="Novo produto" rotuloSalvar="Adicionar produto" />

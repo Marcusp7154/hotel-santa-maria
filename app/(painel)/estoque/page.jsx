@@ -42,7 +42,7 @@ export default async function EstoqueInterno() {
         <section className="bloco"><div className="vazio">
           Nenhum produto de uso interno ainda.{' '}
           {gestor
-            ? <>Eles entram pela <Link href="/estoque/nota">nota do fornecedor (XML)</Link> ou pelo cadastro em <Link href="/cadastros/produtos">Cadastros › Produtos</Link>, escolhendo &quot;Uso interno&quot;.</>
+            ? <>Eles entram pela <Link href="/estoque/nota">nota do fornecedor</Link> ou pelo cadastro em <Link href="/cadastros/produtos">Cadastros › Produtos</Link>, escolhendo &quot;Uso interno&quot;.</>
             : 'A gerência cadastra os produtos ao lançar as notas de compra.'}
         </div></section>
       ) : grupos.map((g) => (
