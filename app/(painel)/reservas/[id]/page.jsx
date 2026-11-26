@@ -188,6 +188,11 @@ export default async function PaginaReserva({ params, searchParams }) {
           <header className="com-edicao">
             <h2>Ficha de hospedagem</h2>
             <Link href={`/ficha/${h.id}?reserva=${r.id}`} className="botao primario">Imprimir ficha (PDF)</Link>
+            {r.origem === 'site' && r.token_publico && ['confirmada', 'hospedado', 'finalizada'].includes(r.status) && (
+              <a href={`/site/pedido/${encodeURIComponent(r.codigo)}/comprovante?t=${r.token_publico}`} target="_blank" rel="noreferrer" className="botao">
+                Comprovante do cliente
+              </a>
+            )}
             <DadosFicha reserva={r} />
           </header>
           <div className="cartao">

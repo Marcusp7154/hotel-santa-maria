@@ -71,8 +71,14 @@ export default async function Pedido({ params, searchParams }) {
             {pag.pago_em ? ` em ${quando(pag.pago_em)}` : ''}. O comprovante foi para o seu e-mail.
             {Number(pedido.total) - Number(pag.pago) > 0 && <> Falta pagar <b>{brl(Number(pedido.total) - Number(pag.pago))}</b> no check-in.</>}
           </p>
+          <Link href={`/site/pedido/${encodeURIComponent(pedido.codigo)}/comprovante?t=${token}`} className="s-botao grande">Baixar comprovante</Link>
           {hotel?.politica_cancelamento && <p className="s-politica">{hotel.politica_cancelamento}</p>}
         </div>
+      )}
+      {['confirmada', 'hospedado', 'finalizada'].includes(pedido.status) && !(pag && Number(pag.pago) > 0) && (
+        <p style={{ marginTop: 20 }}>
+          <Link href={`/site/pedido/${encodeURIComponent(pedido.codigo)}/comprovante?t=${token}`} className="s-botao grande s-comp-link">Baixar comprovante</Link>
+        </p>
       )}
       {pag?.pendencia && Number(pag.pago) === 0 && (
         <div className="s-proximo">
