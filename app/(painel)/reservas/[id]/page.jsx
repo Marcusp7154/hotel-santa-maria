@@ -7,7 +7,7 @@ import {
 } from '@/lib/formato';
 import { contexto, SemAcesso } from '../../funcionarios/acesso';
 import { MOTIVOS, TRANSPORTES } from '@/lib/ficha';
-import { CancelarReserva, ConfirmarReserva, DadosFicha, EditarHospede, MudarDatas } from '../componentes';
+import { CancelarReserva, ConfirmarReserva, DadosFicha, EditarHospede, MudarDatas, ResolverPendencia } from '../componentes';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +28,7 @@ export default async function PaginaReserva({ params, searchParams }) {
     .eq('id', id).maybeSingle();
   if (!r) notFound();
 
-  const [{ data: hoje }, contasR, quartosR, outrasR, hospR, turnoR, hotelR] = await Promise.all([
+  const [{ data: hoje }, contasR, quartosR, outrasR, hospR, turnoR, hotelR, onlineR] = await Promise.all([
     supabase.rpc('fn_hoje'),
     supabase.from('v_contas_saldo').select('conta_id, status, saldo').eq('reserva_id', id),
     supabase.from('quartos').select('id, numero, tipo_quarto_id, status').eq('ativo', true),
@@ -36,9 +36,13 @@ export default async function PaginaReserva({ params, searchParams }) {
       .eq('hospede_id', r.hospede_id).neq('id', id).order('data_checkin', { ascending: false }).limit(6),
     supabase.rpc('fn_hospedagem_resumo', { p_reserva: id }),
     supabase.from('turnos_caixa').select('id').is('fechado_em', null).eq('usuario_id', user.id).maybeSingle(),
-    supabase.from('hoteis').select('hora_checkin, hora_checkout').maybeSingle(),
+    supabase.from('hoteis').select('*').maybeSingle(),
+    supabase.from('pagamentos_online').select('*').eq('reserva_id', id).order('criado_em'),
   ]);
   const horario = hotelR.data || {};
+  const online = onlineR.error ? [] : (onlineR.data || []);
+  const onlinePagos = online.filter((o) => ['aprovado', 'devolvido'].includes(o.status));
+  const onlineEsperando = online.find((o) => o.status === 'pendente' && o.expira_em && new Date(o.expira_em) > new Date());
   const hosp = hospR.data?.[0];
   const hospTotal = Number(hosp?.total || 0);
   const hospFalta = Number(hosp?.pendente || 0);
@@ -68,6 +72,31 @@ export default async function PaginaReserva({ params, searchParams }) {
         <span className={`etiqueta grande ${r.status}`}>{NOME_STATUS_RESERVA[r.status]}</span>
       </div>
 
+      {onlinePagos.map((o) => (
+        <div key={o.id} className={`mensagem ${o.pendencia && !o.resolvido_em ? 'erro' : 'ok'}`} style={{ marginBottom: 16 }}>
+          <b>{o.status === 'devolvido' ? 'Sinal devolvido' : 'Sinal pago pelo site'}: R$ {Number(o.valor_pago || o.valor).toFixed(2).replace('.', ',')}</b>
+          {' · '}{o.forma === 'pix' ? 'Pix' : o.forma === 'credito' ? `cartão de crédito${o.parcelas > 1 ? ` ${o.parcelas}x` : ''}` : o.forma === 'debito' ? 'cartão de débito' : 'Mercado Pago'}
+          {o.aprovado_em && ` · ${new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date(o.aprovado_em))}`}
+          {o.mp_payment_id && <small> · Mercado Pago nº {o.mp_payment_id}</small>}
+          {o.pendencia && !o.resolvido_em ? (
+            <span style={{ display: 'block', marginTop: 6 }}>
+              <b>Atenção:</b> {o.pendencia}{' '}
+              {['admin', 'gerente'].includes(perfil) && <ResolverPendencia id={o.id} />}
+            </span>
+          ) : o.status === 'aprovado' && ['pre_reserva', 'confirmada'].includes(r.status) ? (
+            <small style={{ display: 'block', marginTop: 4 }}>
+              Já está na notinha como pagamento da hospedagem. Se o cliente cancelar até {horario.reembolso_site_horas ?? 48} h antes da entrada,
+              devolva o valor no painel do Mercado Pago (o sistema percebe a devolução e avisa aqui).
+            </small>
+          ) : null}
+        </div>
+      ))}
+      {r.origem === 'site' && r.status === 'pre_reserva' && onlineEsperando && (
+        <div className="mensagem info" style={{ marginBottom: 16 }}>
+          O cliente gerou um {onlineEsperando.tipo === 'pix' ? 'Pix' : 'link de cartão'} pelo site e pode estar pagando agora.
+          Quando o pagamento for aprovado, a reserva se confirma sozinha.
+        </div>
+      )}
       {r.origem === 'site' && r.status === 'pre_reserva' && (
         <div className="mensagem aviso" style={{ marginBottom: 16 }}>
           Pedido feito pelo site. O quarto fica segurado até{' '}

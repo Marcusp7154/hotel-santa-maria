@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v || 0));
 
 // Um tipo de quarto livre: valor total e, ao escolher, o formulário do pedido
-export function EscolherQuarto({ tipo, entrada, saida, adultos, criancas, noites, prazoHoras, politica, aberto: abertoInicial }) {
+export function EscolherQuarto({ tipo, entrada, saida, adultos, criancas, noites, prazoHoras, politica, pagamentoOnline, aberto: abertoInicial }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(abertoInicial);
   const [enviando, setEnviando] = useState(false);
@@ -91,7 +91,9 @@ export function EscolherQuarto({ tipo, entrada, saida, adultos, criancas, noites
           {erro && <p className="s-erro largo" role="alert">{erro}</p>}
           <div className="largo s-form-pe">
             <button type="submit" className="s-botao grande" disabled={enviando}>{enviando ? 'Enviando…' : `Pedir reserva · ${brl(tipo.total)}`}</button>
-            <small>Nada é cobrado agora. O quarto fica segurado por {prazoHoras} horas e a recepção confirma pelo WhatsApp.</small>
+            <small>{pagamentoOnline
+              ? 'No próximo passo você paga o sinal por Pix ou cartão e a reserva já sai confirmada.'
+              : `Nada é cobrado agora. O quarto fica segurado por ${prazoHoras} horas e a recepção confirma pelo WhatsApp.`}</small>
           </div>
         </form>
       )}

@@ -64,6 +64,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 18. `banco/hotel_fase1r.sql`: nota de entrada pelo XML (estoque + despesa automáticos) e estoque de uso interno com retirada.
 19. `banco/hotel_fase1s.sql`: nota de entrada lida do PDF ou da foto pela inteligência artificial (guarda a origem da nota).
 20. `banco/hotel_fase1t.sql`: trocar a forma de pagamento de um recebimento (ex.: Dinheiro para Pix) enquanto o caixa está aberto.
+21. `banco/hotel_fase1u.sql`: pagamento do sinal pelo site (Mercado Pago: Pix e cartão), com confirmação automática da reserva.
 
 ## Publicar na Vercel
 
@@ -100,6 +101,20 @@ Toda alteração enviada ao GitHub é publicada automaticamente pela Vercel em c
 3. Opcional: `ANTHROPIC_MODEL` troca o modelo (padrão `claude-sonnet-5-5`; `claude-haiku-5-5` é mais barato).
 
 Sem a chave, o XML continua funcionando normalmente; só o PDF e a foto avisam que falta configurar.
+
+## Pagamento do sinal pelo site (Mercado Pago)
+
+1. Rode `banco/hotel_fase1u.sql` no Supabase.
+2. No Mercado Pago, entre em **Suas integrações** (mercadopago.com.br/developers/panel), crie uma aplicação
+   (tipo *Pagamentos online*, produto *Checkout Pro*) e copie o **Access Token de produção**
+   (para testar antes, use o de teste).
+3. Na Vercel, *Settings > Environment Variables*: `MERCADOPAGO_ACCESS_TOKEN` = o Access Token. Salve e faça *Redeploy*.
+4. Recomendado: na aplicação do Mercado Pago, em *Webhooks*, cadastre a URL
+   `https://SEU-SITE/api/site/mercadopago` com o evento *Pagamentos*, copie a **assinatura secreta** e
+   coloque na Vercel como `MERCADOPAGO_WEBHOOK_SECRET`.
+
+Sem o token, o site continua como antes (pedido + confirmação pelo WhatsApp).
+O sinal é 50% do valor; a devolução vale até 48 h antes da entrada (texto em *politica_cancelamento* do hotel).
 
 ## Rodar no próprio computador (opcional)
 

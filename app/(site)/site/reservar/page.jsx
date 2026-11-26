@@ -1,4 +1,5 @@
 import { disponibilidade, infoDoHotel, linkWhatsApp } from '@/lib/site';
+import { mercadoPagoAtivo } from '@/lib/mercadopago';
 import { BuscaDatas } from '../busca-datas';
 import { EscolherQuarto } from './pedido';
 
@@ -26,6 +27,7 @@ export default async function Reservar({ searchParams }) {
   const livres = (resultado?.tipos || []).filter((t) => t.disponivel);
   const lotados = (resultado?.tipos || []).filter((t) => !t.disponivel);
   // o tipo escolhido na página inicial aparece primeiro
+  const online = mercadoPagoAtivo();
   const zap = linkWhatsApp(hotel?.telefone, `Olá! Queria reservar para ${adultos + criancas} pessoas${entrada && saida ? ` de ${dataBR(entrada)} a ${dataBR(saida)}` : ''}.`);
   livres.sort((a, b) => Number(b.tipo_id === tipoPreferido) - Number(a.tipo_id === tipoPreferido));
 
@@ -57,7 +59,7 @@ export default async function Reservar({ searchParams }) {
           <div className="s-opcoes">
             {livres.map((t) => (
               <EscolherQuarto key={t.tipo_id} tipo={t} entrada={entrada} saida={saida} adultos={adultos} criancas={criancas}
-                              noites={noites} prazoHoras={hotel.prazo_horas} politica={hotel.politica_cancelamento}
+                              noites={noites} prazoHoras={hotel.prazo_horas} politica={hotel.politica_cancelamento} pagamentoOnline={online}
                               aberto={false} />
             ))}
             {lotados.map((t) => (

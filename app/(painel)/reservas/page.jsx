@@ -26,6 +26,10 @@ export default async function PaginaReservas({ searchParams }) {
   const { data: pedidosSite } = await supabase.from('reservas')
     .select('id, codigo, data_checkin, data_checkout, adultos, criancas, expira_em, criado_em, hospedes ( nome, telefone ), reserva_quartos ( tipos_quarto ( nome ) )')
     .eq('origem', 'site').eq('status', 'pre_reserva').order('criado_em');
+  const pendOnline = await supabase.from('pagamentos_online')
+    .select('id, valor, valor_pago, pendencia, aprovado_em, reservas ( id, codigo, hospedes ( nome ) )')
+    .not('pendencia', 'is', null).is('resolvido_em', null).order('criado_em');
+  const pendencias = pendOnline.error ? [] : (pendOnline.data || []);
 
   let consulta = supabase.from('reservas')
     .select(`id, codigo, data_checkin, data_checkout, adultos, criancas, origem, status, observacoes,
@@ -80,10 +84,30 @@ export default async function PaginaReservas({ searchParams }) {
         <Link href="/reservas/nova" className="botao primario">+ Nova reserva</Link>
       </div>
 
+      {pendencias.length > 0 && (
+        <section className="bloco pedidos-site">
+          <header><h2>Pagamentos do site para resolver</h2><span className="contagem">{pendencias.length}</span></header>
+          <ul className="lista-reservas">
+            {pendencias.map((p) => (
+              <li key={p.id}>
+                <Link href={`/reservas/${p.reservas?.id}`} className="linha-reserva">
+                  <span className="lr-quartos"><b>!</b></span>
+                  <span className="lr-quem">
+                    <b>{p.reservas?.hospedes?.nome} · {p.reservas?.codigo}</b>
+                    <small>{p.pendencia}</small>
+                  </span>
+                  <span className="lr-fim"><b>R$ {Number(p.valor_pago || p.valor).toFixed(2).replace('.', ',')}</b></span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {(pedidosSite || []).length > 0 && (
         <section className="bloco pedidos-site">
           <header><h2>Pedidos do site para confirmar</h2><span className="contagem">{pedidosSite.length}</span></header>
-          <p className="nota">Chame o cliente no WhatsApp, combine o pagamento e confirme. Sem confirmação, o pedido cai sozinho no prazo.</p>
+          <p className="nota">Quem paga o sinal pelo site é confirmado sozinho. Os demais: chame no WhatsApp, combine o pagamento e confirme. Sem confirmação, o pedido cai sozinho no prazo.</p>
           <ul className="lista-reservas">
             {pedidosSite.map((r) => {
               const tel = (r.hospedes?.telefone || '').replace(/\D/g, '');

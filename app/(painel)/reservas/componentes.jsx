@@ -181,3 +181,17 @@ export function DadosFicha({ reserva }) {
     </form>
   );
 }
+
+// Pendência de pagamento online (pago em dobro, depois de vencer...): a gerência marca como resolvida
+export function ResolverPendencia({ id }) {
+  const { ocupado, erro, rodar } = useAcao();
+  return (
+    <span className="acoes">
+      <button type="button" disabled={ocupado}
+              onClick={() => rodar((sb) => sb.rpc('fn_resolver_pagamento_online', { p_id: id }))}>
+        {ocupado ? 'Salvando…' : 'Marcar como resolvido'}
+      </button>
+      <Erro texto={erro} />
+    </span>
+  );
+}
