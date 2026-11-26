@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 export const maxDuration = 60;
 
 const MODELO = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
+const RESERVA = 'claude-haiku-5-5';
 const TIPOS = {
   'application/pdf': 'document',
   'image/jpeg': 'image',
@@ -71,7 +72,7 @@ Copie os dados exatamente como estão impressos. Não invente nem complete nada 
 Leia todos os itens da tabela de produtos, inclusive os que continuam em outras páginas.
 Números: a nota usa vírgula como decimal (1.234,56 = 1234.56). Quantidades podem ter casas decimais (4,500 KG = 4.5).
 A chave de acesso tem 44 dígitos e costuma aparecer agrupada de 4 em 4; devolva só os números.
-Chame a ferramenta registrar_nota uma única vez.`;
+Responda chamando a ferramenta registrar_nota uma única vez, com todos os itens. Não escreva texto fora da ferramenta.`;
 
 export async function POST(request) {
   const supabase = await createClient();
@@ -95,27 +96,32 @@ export async function POST(request) {
   if (arquivo.size > MAX_BYTES) return responder({ erro: 'Arquivo grande demais (máximo 4 MB).' }, 400);
   const dados = Buffer.from(await arquivo.arrayBuffer()).toString('base64');
 
+  const pedir = (modelo) => fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': chave, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: modelo,
+      max_tokens: 32000,
+      system: INSTRUCAO,
+      tools: [FERRAMENTA],
+      // "auto": os modelos que sempre pensam antes de responder não aceitam ferramenta obrigatória
+      tool_choice: { type: 'auto' },
+      messages: [{
+        role: 'user',
+        content: [
+          { type: tipo, source: { type: 'base64', media_type: arquivo.type, data: dados } },
+          { type: 'text', text: 'Leia esta nota fiscal e chame a ferramenta registrar_nota com os dados.' },
+        ],
+      }],
+    }),
+    signal: AbortSignal.timeout(55000),
+  });
+
   let resp;
   try {
-    resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': chave, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: MODELO,
-        max_tokens: 16000,
-        system: INSTRUCAO,
-        tools: [FERRAMENTA],
-        tool_choice: { type: 'tool', name: 'registrar_nota' },
-        messages: [{
-          role: 'user',
-          content: [
-            { type: tipo, source: { type: 'base64', media_type: arquivo.type, data: dados } },
-            { type: 'text', text: 'Leia esta nota fiscal.' },
-          ],
-        }],
-      }),
-      signal: AbortSignal.timeout(55000),
-    });
+    resp = await pedir(MODELO);
+    // modelo indisponível na conta: tenta o modelo mais simples
+    if (resp.status === 404 && MODELO !== RESERVA) resp = await pedir(RESERVA);
   } catch (e) {
     if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
       return responder({ erro: 'A leitura demorou demais. Tente de novo ou use uma foto mais nítida.' }, 504);
@@ -126,19 +132,22 @@ export async function POST(request) {
   if (!resp.ok) {
     const corpo = await resp.json().catch(() => ({}));
     const tipoErro = corpo?.error?.type || '';
-    console.error('Leitura de nota: erro da API', resp.status, tipoErro, corpo?.error?.message);
+    const mensagem = String(corpo?.error?.message || '');
+    console.error('Leitura de nota: erro da API', resp.status, tipoErro, mensagem);
     if (resp.status === 401) return responder({ erro: 'A chave da Anthropic na Vercel não foi aceita. Confira ANTHROPIC_API_KEY.' }, 502);
-    if (/credit|billing/i.test(corpo?.error?.message || '')) return responder({ erro: 'Os créditos da conta da Anthropic acabaram. Recarregue em platform.claude.com.' }, 502);
+    if (/credit|billing/i.test(mensagem)) return responder({ erro: 'Os créditos da conta da Anthropic acabaram. Recarregue em platform.claude.com.' }, 502);
     if (resp.status === 429 || resp.status === 529) return responder({ erro: 'O serviço de leitura está ocupado. Tente de novo em instantes.' }, 503);
-    if (resp.status === 404 || /model/i.test(corpo?.error?.message || '')) {
-      return responder({ erro: `O modelo de IA "${MODELO}" não está disponível nesta conta. Confira ANTHROPIC_MODEL na Vercel.` }, 502);
-    }
     if (resp.status === 403) return responder({ erro: 'A chave da Anthropic não tem permissão para usar a API. Confira a chave no Console.' }, 502);
-    const detalhe = String(corpo?.error?.message || '').slice(0, 200);
-    return responder({ erro: `A leitura falhou (código ${resp.status}${tipoErro ? `, ${tipoErro}` : ''})${detalhe ? `: ${detalhe}` : ''}` }, 502);
+    return responder({ erro: `A leitura falhou (código ${resp.status}${tipoErro ? `, ${tipoErro}` : ''})${mensagem ? `: ${mensagem.slice(0, 240)}` : ''}` }, 502);
   }
   const r = await resp.json();
-  const uso = r.content?.find((c) => c.type === 'tool_use')?.input;
+  let uso = r.content?.find((c) => c.type === 'tool_use' && c.name === 'registrar_nota')?.input;
+  if (!uso) {
+    // se respondeu em texto, tenta achar o JSON
+    const texto = (r.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
+    const m = texto.match(/\{[\s\S]*\}/);
+    try { uso = m ? JSON.parse(m[0]) : null; } catch { uso = null; }
+  }
   if (!uso) return responder({ erro: 'Não consegui ler esta nota. Tente uma foto mais nítida.' }, 422);
   if (!uso.e_nota_fiscal) return responder({ erro: 'Isso não parece uma nota fiscal. Envie o PDF ou a foto da nota.' }, 422);
   if (!Array.isArray(uso.itens) || uso.itens.length === 0) {
