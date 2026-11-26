@@ -167,6 +167,7 @@ export function ListaProdutos({ produtos }) {
         </nav>
         <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Procurar produto…"
                aria-label="Procurar produto" className="prod-busca" />
+        <a href="/estoque/imprimir" className="botao">Imprimir estoque</a>
         <button type="button" className="primario" onClick={() => { setAberto('novo'); setAviso(null); }}>+ Novo produto</button>
       </div>
 
