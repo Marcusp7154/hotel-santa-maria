@@ -1595,3 +1595,5 @@ input.invalido { border-color: var(--alerta); }
   .s-pix { grid-template-columns: 1fr; justify-items: center; }
   .s-pix-lado { width: 100%; }
 }
+.mapa-data { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mapa-data input { padding: 6px 8px; }

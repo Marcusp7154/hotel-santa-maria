@@ -65,6 +65,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 19. `banco/hotel_fase1s.sql`: nota de entrada lida do PDF ou da foto pela inteligência artificial (guarda a origem da nota).
 20. `banco/hotel_fase1t.sql`: trocar a forma de pagamento de um recebimento (ex.: Dinheiro para Pix) enquanto o caixa está aberto.
 21. `banco/hotel_fase1u.sql`: pagamento do sinal pelo site (Mercado Pago: Pix e cartão), com confirmação automática da reserva.
+22. `banco/hotel_fase1v.sql`: reserva confirmada ganha um quarto livre do tipo automaticamente (mapa e visão geral).
 
 ## Publicar na Vercel
 

@@ -76,6 +76,11 @@ export default async function Mapa({ searchParams }) {
           <Link className="botao" href={`/mapa?inicio=${somarDias(inicio, -7)}`}>← 7 dias</Link>
           <Link className="botao" href="/mapa">Hoje</Link>
           <Link className="botao" href={`/mapa?inicio=${somarDias(inicio, 7)}`}>7 dias →</Link>
+          <form action="/mapa" className="mapa-data">
+            <label htmlFor="mapa-ir" className="fraco">Ver a partir de</label>
+            <input id="mapa-ir" type="date" name="inicio" defaultValue={inicio} required />
+            <button type="submit">Ir</button>
+          </form>
         </div>
       </div>
 
