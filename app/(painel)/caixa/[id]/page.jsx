@@ -16,7 +16,7 @@ export default async function RelatorioTurno({ params }) {
 
   const [turnoR, pagR, movR, despR, hotelR] = await Promise.all([
     supabase.from('turnos_caixa').select('*, perfis ( nome )').eq('id', id).maybeSingle(),
-    supabase.from('pagamentos').select('id, forma, valor, estorno_de, motivo, hospedagem, criado_em, contas ( titular, reservas ( codigo ) )')
+    supabase.from('pagamentos').select('*, contas ( titular, reservas ( codigo ) )')
       .eq('turno_id', id).order('criado_em'),
     supabase.from('movimentos_caixa').select('*').eq('turno_id', id).order('criado_em'),
     supabase.from('despesas').select('*, categorias_despesa ( nome )').eq('turno_id', id).order('criado_em'),
@@ -134,7 +134,7 @@ export default async function RelatorioTurno({ params }) {
                         <small className="fraco"> · {[p.hospedagem && !p.motivo ? 'hospedagem' : null, p.motivo].filter(Boolean).join(' · ')}</small>
                       )}
                     </td>
-                    <td>{NOME_FORMA[p.forma]}</td>
+                    <td>{NOME_FORMA[p.forma]}{p.forma_original && <small style={{ display: 'block' }}>era {NOME_FORMA[p.forma_original]}</small>}</td>
                     <td className="num">{brl(p.valor)}</td>
                   </tr>
                 ))}

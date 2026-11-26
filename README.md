@@ -63,6 +63,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 17. `banco/hotel_fase1q.sql`: libera o quarto quando o hóspede sai antes (ou no mesmo dia) e o site só oferece quartos onde o grupo inteiro cabe.
 18. `banco/hotel_fase1r.sql`: nota de entrada pelo XML (estoque + despesa automáticos) e estoque de uso interno com retirada.
 19. `banco/hotel_fase1s.sql`: nota de entrada lida do PDF ou da foto pela inteligência artificial (guarda a origem da nota).
+20. `banco/hotel_fase1t.sql`: trocar a forma de pagamento de um recebimento (ex.: Dinheiro para Pix) enquanto o caixa está aberto.
 
 ## Publicar na Vercel
 

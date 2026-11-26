@@ -1552,3 +1552,6 @@ input.invalido { border-color: var(--alerta); }
   .estoque-tabela .estoque-marca { color: #000; }
   .estoque-tabela td.estoque-contado { border-bottom-color: #000; }
 }
+.trocar-forma { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.trocar-forma .segmentos button { padding: 6px 12px; }
+.trocar-forma .mensagem { flex-basis: 100%; }

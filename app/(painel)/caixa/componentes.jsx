@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Erro, useAcao } from '@/app/(painel)/acoes';
-import { brl } from '@/lib/formato';
+import { brl, NOME_FORMA } from '@/lib/formato';
 
 // Fecha o dia: junta os caixas fechados desde o último fechamento e abre o relatório
 export function FecharDia({ qtd }) {
@@ -59,6 +59,36 @@ export function EstornarPagamento({ pagamento, temTurno }) {
       <button type="button" onClick={() => setAberto(false)} disabled={ocupado}>Cancelar</button>
       <Erro texto={erro} />
     </form>
+  );
+}
+
+// Corrige a forma de um recebimento lançado errado (ex.: era Pix, lançou Dinheiro), só com o caixa aberto
+export function TrocarForma({ pagamento }) {
+  const { ocupado, erro, rodar } = useAcao();
+  const [aberto, setAberto] = useState(false);
+  const [feito, setFeito] = useState(null);
+  if (!aberto) {
+    return (
+      <>
+        <button type="button" onClick={() => { setAberto(true); setFeito(null); }}>Trocar forma de pagamento</button>
+        {feito && <span className="mensagem ok">{feito}</span>}
+      </>
+    );
+  }
+  return (
+    <div className="trocar-forma">
+      <span className="fraco">Recebido em <b>{NOME_FORMA[pagamento.forma]}</b> ({brl(pagamento.valor)}). Mudar para:</span>
+      <div className="acoes" role="group" aria-label="Nova forma de pagamento">
+        {Object.entries(NOME_FORMA).filter(([k]) => k !== pagamento.forma).map(([k, n]) => (
+          <button key={k} type="button" disabled={ocupado} onClick={async () => {
+            const r = await rodar((sb) => sb.rpc('fn_trocar_forma_pagamento', { p_pagamento: pagamento.id, p_forma: k }));
+            if (r.ok) { setAberto(false); setFeito(`Forma trocada para ${n}.`); }
+          }}>{n}</button>
+        ))}
+      </div>
+      <button type="button" className="fantasma" onClick={() => setAberto(false)} disabled={ocupado}>Voltar</button>
+      <Erro texto={erro} />
+    </div>
   );
 }
 

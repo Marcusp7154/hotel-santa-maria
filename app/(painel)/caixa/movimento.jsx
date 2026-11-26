@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { brl } from '@/lib/formato';
-import { CancelarDespesa, EstornarPagamento } from './componentes';
+import { CancelarDespesa, EstornarPagamento, TrocarForma } from './componentes';
 
 const FILTROS = [
   { id: 'tudo', nome: 'Tudo' },
@@ -63,7 +63,7 @@ export function MovimentoTurno({ itens, turnoId }) {
       ) : (
         <ul className="mov-lista">
           {visiveis.map((i) => {
-            const temAcao = Boolean(i.pagamento || i.despesa);
+            const temAcao = Boolean(i.pagamento || i.despesa || i.trocavel);
             const estaAberto = aberto === i.id;
             return (
               <li key={i.id} className={`mov-item${i.cancelado ? ' riscado' : ''}${estaAberto ? ' aberto' : ''}`}>
@@ -82,6 +82,7 @@ export function MovimentoTurno({ itens, turnoId }) {
                 </button>
                 {estaAberto && (
                   <div className="mov-acao">
+                    {i.trocavel && <TrocarForma pagamento={i.trocavel} />}
                     {i.pagamento && <EstornarPagamento pagamento={i.pagamento} temTurno />}
                     {i.despesa && <CancelarDespesa despesa={i.despesa} />}
                   </div>

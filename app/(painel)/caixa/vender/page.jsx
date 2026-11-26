@@ -4,6 +4,7 @@ import { horaDe } from '@/lib/caixa';
 import { contexto, SemAcesso } from '../../funcionarios/acesso';
 import { AbasCaixa } from '../componentes';
 import { CancelarVenda, Pdv } from './pdv';
+import { TrocarForma } from '../componentes';
 import { paraVenda } from '@/lib/produtos';
 
 export const dynamic = 'force-dynamic';
@@ -23,12 +24,12 @@ export default async function Vender() {
   let vendas = [];
   if (turno) {
     const { data: pags } = await supabase.from('pagamentos')
-      .select('conta_id, forma, valor, estorno_de, criado_em, contas!inner ( id, titular, reserva_id, lancamentos ( descricao, quantidade, tipo ) )')
+      .select('*, contas!inner ( id, titular, reserva_id, lancamentos ( descricao, quantidade, tipo ) )')
       .eq('turno_id', turno.id).is('contas.reserva_id', null).order('criado_em', { ascending: false });
     const porConta = new Map();
     for (const p of pags || []) {
-      const v = porConta.get(p.conta_id) || { conta: p.contas, forma: p.forma, em: p.criado_em, total: 0, cancelada: false };
-      if (p.estorno_de) v.cancelada = true; else { v.total += Number(p.valor); v.forma = p.forma; v.em = p.criado_em; }
+      const v = porConta.get(p.conta_id) || { conta: p.contas, forma: p.forma, em: p.criado_em, total: 0, cancelada: false, pag: null };
+      if (p.estorno_de) v.cancelada = true; else { v.total += Number(p.valor); v.forma = p.forma; v.em = p.criado_em; v.pag = p; }
       porConta.set(p.conta_id, v);
     }
     vendas = [...porConta.values()].sort((a, b) => (a.em < b.em ? 1 : -1));
@@ -68,12 +69,13 @@ export default async function Vender() {
                       <span className="mov-ponto recebido" aria-hidden="true" />
                       <span className="mov-texto">
                         <b>{itens.map((l) => `${Number(l.quantidade)}× ${l.descricao}`).join(', ')}</b>
-                        <small>{v.conta.titular} · {NOME_FORMA[v.forma]}{v.cancelada ? ' · cancelada' : ''}</small>
+                        <small>{v.conta.titular} · {NOME_FORMA[v.forma]}{v.pag?.forma_original ? ` (era ${NOME_FORMA[v.pag.forma_original]})` : ''}{v.cancelada ? ' · cancelada' : ''}</small>
                       </span>
                       <span className="mov-valor positivo"><span className="mov-num">{brl(v.total)}</span></span>
                     </div>
                     <div className="acoes venda-acoes">
                       <Link href={`/conta/${v.conta.id}`} className="botao">Recibo</Link>
+                      {!v.cancelada && v.pag && <TrocarForma pagamento={v.pag} />}
                       {!v.cancelada && <CancelarVenda contaId={v.conta.id} total={v.total} />}
                     </div>
                   </li>

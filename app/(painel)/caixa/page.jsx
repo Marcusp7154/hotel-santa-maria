@@ -10,7 +10,7 @@ import { MovimentoTurno } from './movimento';
 
 export const dynamic = 'force-dynamic';
 
-const CAMPOS_PAGAMENTO = 'id, turno_id, conta_id, forma, valor, estorno_de, motivo, criado_em, contas ( titular, reservas ( codigo ) )';
+const CAMPOS_PAGAMENTO = '*, contas ( titular, reservas ( codigo ) )';
 
 export default async function PaginaCaixa({ searchParams }) {
   const params = await searchParams;
@@ -68,9 +68,11 @@ export default async function PaginaCaixa({ searchParams }) {
       return {
         id: p.id, em: p.criado_em, tipo: 'recebido', valor: Number(p.valor), sinal: Number(p.valor) < 0 ? -1 : 1,
         titulo: p.estorno_de ? `Estorno · ${p.contas?.titular || ''}` : (p.contas?.titular || 'Pagamento'),
-        sub: [!p.contas?.reservas ? 'venda no balcão' : p.contas?.reservas?.codigo, NOME_FORMA[p.forma], p.motivo].filter(Boolean).join(' · '),
+        sub: [!p.contas?.reservas ? 'venda no balcão' : p.contas?.reservas?.codigo,
+          p.forma_original ? `${NOME_FORMA[p.forma]} (era ${NOME_FORMA[p.forma_original]})` : NOME_FORMA[p.forma], p.motivo].filter(Boolean).join(' · '),
         etiqueta: estornado ? 'estornado' : null, cancelado: estornado,
         pagamento: !p.estorno_de && !estornado && p.contas?.reservas ? p : null,
+        trocavel: !p.estorno_de && !estornado ? p : null,
       };
     }),
     ...minhasDesps.map((d) => ({

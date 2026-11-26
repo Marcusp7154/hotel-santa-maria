@@ -32,5 +32,6 @@ aplica "$BANCO/hotel_fase1p.sql"; testa teste_fase1p.sql
 aplica "$BANCO/hotel_fase1q.sql"; testa teste_fase1q.sql
 aplica "$BANCO/hotel_fase1r.sql"; testa teste_fase1r.sql
 aplica "$BANCO/hotel_fase1s.sql"; testa teste_fase1s.sql
+aplica "$BANCO/hotel_fase1t.sql"; testa teste_fase1t.sql
 testa teste_fase1k.sql
 echo; [ "$falhas" -eq 0 ] && echo "TUDO OK" || { echo "$falhas problema(s)"; exit 1; }
