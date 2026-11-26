@@ -94,8 +94,14 @@ export function ConferirNota({ produtos, categorias, memoria, hoje }) {
         const form = new FormData();
         form.append('arquivo', envio, envio.name || 'nota');
         const resp = await fetch('/api/nota/ler', { method: 'POST', body: form });
-        const corpo = await resp.json().catch(() => ({}));
-        if (!resp.ok) throw new Error(corpo.erro || 'Não foi possível ler a nota agora. Tente de novo.');
+        const corpo = await resp.json().catch(() => null);
+        if (!resp.ok || !corpo) {
+          if (corpo?.erro) throw new Error(corpo.erro);
+          if (resp.status === 504) throw new Error('A leitura passou do tempo do servidor. Tente de novo; se continuar, use uma foto só da parte dos produtos.');
+          if (resp.status === 413) throw new Error('Arquivo grande demais para enviar. Use uma foto ou um PDF menor.');
+          if (resp.status === 401 || resp.redirected) throw new Error('Sua sessão expirou. Entre no sistema de novo.');
+          throw new Error(`Não foi possível ler a nota agora (código ${resp.status}). Tente de novo.`);
+        }
         n = notaDaLeitura(corpo.nota, ehPdf ? 'pdf' : 'foto');
         n.ilegivel = !corpo.legivel;
       }

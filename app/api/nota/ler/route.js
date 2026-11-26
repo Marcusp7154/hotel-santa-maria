@@ -116,8 +116,12 @@ export async function POST(request) {
       }),
       signal: AbortSignal.timeout(55000),
     });
-  } catch {
-    return responder({ erro: 'A leitura demorou demais. Tente de novo ou use uma foto mais nítida.' }, 504);
+  } catch (e) {
+    if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
+      return responder({ erro: 'A leitura demorou demais. Tente de novo ou use uma foto mais nítida.' }, 504);
+    }
+    console.error('Leitura de nota: falha de conexão', e?.message);
+    return responder({ erro: 'Não consegui falar com o serviço de leitura. Tente de novo em instantes.' }, 502);
   }
   if (!resp.ok) {
     const corpo = await resp.json().catch(() => ({}));
@@ -126,7 +130,12 @@ export async function POST(request) {
     if (resp.status === 401) return responder({ erro: 'A chave da Anthropic na Vercel não foi aceita. Confira ANTHROPIC_API_KEY.' }, 502);
     if (/credit|billing/i.test(corpo?.error?.message || '')) return responder({ erro: 'Os créditos da conta da Anthropic acabaram. Recarregue em platform.claude.com.' }, 502);
     if (resp.status === 429 || resp.status === 529) return responder({ erro: 'O serviço de leitura está ocupado. Tente de novo em instantes.' }, 503);
-    return responder({ erro: 'Não foi possível ler a nota agora. Tente de novo.' }, 502);
+    if (resp.status === 404 || /model/i.test(corpo?.error?.message || '')) {
+      return responder({ erro: `O modelo de IA "${MODELO}" não está disponível nesta conta. Confira ANTHROPIC_MODEL na Vercel.` }, 502);
+    }
+    if (resp.status === 403) return responder({ erro: 'A chave da Anthropic não tem permissão para usar a API. Confira a chave no Console.' }, 502);
+    const detalhe = String(corpo?.error?.message || '').slice(0, 200);
+    return responder({ erro: `A leitura falhou (código ${resp.status}${tipoErro ? `, ${tipoErro}` : ''})${detalhe ? `: ${detalhe}` : ''}` }, 502);
   }
   const r = await resp.json();
   const uso = r.content?.find((c) => c.type === 'tool_use')?.input;
