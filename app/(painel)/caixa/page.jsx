@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Caixa } from '@/app/(painel)/acoes';
 import { brl, NOME_FORMA } from '@/lib/formato';
-import { horaDe, quando, resumirTurno, FORMAS } from '@/lib/caixa';
+import { horaDe, quando, resumirTurno, FORMAS, NOME_FORMA_SITE, pagosNoSite } from '@/lib/caixa';
 import { mesValido, nomeMes, somarMes } from '@/lib/rh';
 import { contexto, SemAcesso } from '../funcionarios/acesso';
 import { SeletorMes } from '../funcionarios/seletor-mes';
@@ -46,6 +46,7 @@ export default async function PaginaCaixa({ searchParams }) {
     meu ? supabase.rpc('fn_resumo_turno', { p_turno: meu.id }) : { data: [] },
     supabase.from('categorias_despesa').select('id, nome').eq('ativo', true).order('nome'),
   ]);
+  const doSite = meu ? await pagosNoSite(supabase, meu.aberto_em, null) : [];
   const pagamentos = pagR.data || [];
   const movimentos = movR.data || [];
   const despesas = despR.data || [];
@@ -83,6 +84,12 @@ export default async function PaginaCaixa({ searchParams }) {
       etiqueta: d.cancelada_em ? 'cancelada' : (d.forma !== 'dinheiro' ? `${NOME_FORMA[d.forma]}, fora da gaveta` : null),
       cancelado: Boolean(d.cancelada_em),
       despesa: d.cancelada_em ? null : { id: d.id },
+    })),
+    ...doSite.map((p) => ({
+      id: `site-${p.id}`, em: p.aprovado_em, tipo: 'site', valor: p.valorPago, sinal: 1,
+      titulo: p.reservas?.hospedes?.nome || 'Pagamento pelo site',
+      sub: ['Pago no site', NOME_FORMA_SITE[p.forma] + (p.parcelas > 1 ? ` ${p.parcelas}x` : ''), p.reservas?.codigo, 'não entra na gaveta'].filter(Boolean).join(' · '),
+      etiqueta: p.status === 'devolvido' ? 'devolvido' : 'site', cancelado: p.status === 'devolvido',
     })),
     ...meusMovs.map((m) => ({
       id: m.id, em: m.criado_em, tipo: 'troco', valor: Number(m.valor), sinal: m.tipo === 'sangria' ? -1 : 1,

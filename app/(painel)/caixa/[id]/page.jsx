@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BotaoImprimir } from '@/app/(painel)/acoes';
 import { brl, NOME_FORMA } from '@/lib/formato';
-import { FORMAS, horaDe, quando, resumirTurno } from '@/lib/caixa';
+import { FORMAS, horaDe, NOME_FORMA_SITE, pagosNoSite, quando, resumirTurno } from '@/lib/caixa';
 import { contexto } from '../../funcionarios/acesso';
 
 export const dynamic = 'force-dynamic';
@@ -35,6 +35,8 @@ export default async function RelatorioTurno({ params }) {
   // Turno que passa da meia-noite (noturno): mostra o dia junto da hora
   const variosDias = diaDe(t.aberto_em) !== diaDe(t.fechado_em || new Date().toISOString());
   const hora = (ts) => (variosDias ? `${diaDe(ts)} ${horaDe(ts)}` : horaDe(ts));
+  const doSite = await pagosNoSite(supabase, t.aberto_em, t.fechado_em);
+  const totalSite = doSite.filter((p) => p.status !== 'devolvido').reduce((s, p) => s + p.valorPago, 0);
 
   const despValidas = desps.filter((d) => !d.cancelada_em);
   const totalDesp = despValidas.reduce((s, d) => s + Number(d.valor), 0);
@@ -143,6 +145,31 @@ export default async function RelatorioTurno({ params }) {
             </table>
           )}
         </section>
+
+        {doSite.length > 0 && (
+          <section className="rt-secao rt-site">
+            <h2>Pago no site (Mercado Pago) <small>{doSite.length} · {brl(totalSite)}</small></h2>
+            <p className="rt-obs" style={{ marginTop: 0 }}>Só para informação: esse dinheiro caiu no Mercado Pago, não na gaveta, e não entra no dinheiro esperado.</p>
+            <table className="rt-tabela listrada">
+              <colgroup><col className="c-hora" /><col /><col className="c-forma" /><col className="c-valor" /></colgroup>
+              <thead><tr><th>Hora</th><th>Hóspede / reserva</th><th>Forma</th><th className="num">Valor</th></tr></thead>
+              <tbody>
+                {doSite.map((p) => (
+                  <tr key={p.id} className={p.status === 'devolvido' ? 'estornado' : ''}>
+                    <td>{hora(p.aprovado_em)}</td>
+                    <td>
+                      {p.reservas?.hospedes?.nome || '—'}{p.reservas?.codigo && <span className="fraco"> · {p.reservas.codigo}</span>}
+                      <small className="fraco"> · sinal pago no site{p.mp_payment_id ? ` · MP ${p.mp_payment_id}` : ''}{p.status === 'devolvido' ? ' · devolvido' : ''}</small>
+                    </td>
+                    <td>{NOME_FORMA_SITE[p.forma]}{p.parcelas > 1 ? ` ${p.parcelas}x` : ''}</td>
+                    <td className="num">{brl(p.valorPago)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot><tr><td colSpan={3}>Total pago no site</td><td className="num">{brl(totalSite)}</td></tr></tfoot>
+            </table>
+          </section>
+        )}
 
         {desps.length > 0 && (
           <section className="rt-secao">

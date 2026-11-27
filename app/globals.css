@@ -1645,3 +1645,6 @@ input.invalido { border-color: var(--alerta); }
   .s-comp { border: 0; box-shadow: none; padding: 0; }
   .s-comp-selo { border: 1px solid currentColor; }
 }
+.mov-ponto.site { background: #009ee3; }
+.mov-resumo b.site { color: #0077b6; }
+.rt-site { border-left: 3px solid #009ee3; padding-left: 10px; }

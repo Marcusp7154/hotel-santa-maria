@@ -10,6 +10,7 @@ const FILTROS = [
   { id: 'recebido', nome: 'Recebimentos' },
   { id: 'despesa', nome: 'Despesas' },
   { id: 'troco', nome: 'Troco' },
+  { id: 'site', nome: 'Pago no site' },
 ];
 const POR_VEZ = 8;
 
@@ -34,12 +35,14 @@ export function MovimentoTurno({ itens, turnoId }) {
 
   const entrou = itens.filter((i) => i.tipo === 'recebido').reduce((a, i) => a + i.valor, 0);
   const saiu = itens.filter((i) => i.tipo === 'despesa' && !i.cancelado).reduce((a, i) => a + i.valor, 0);
+  const site = itens.filter((i) => i.tipo === 'site' && !i.cancelado).reduce((a, i) => a + i.valor, 0);
 
   return (
     <div className="mov">
       <div className="mov-resumo">
         <span><small>Recebido</small><b className="positivo">{brl(entrou)}</b></span>
         <span><small>Despesas</small><b className="negativo">{brl(saiu)}</b></span>
+        {site > 0 && <span><small>Pago no site</small><b className="site">{brl(site)}</b></span>}
       </div>
 
       <div className="mov-filtros">
