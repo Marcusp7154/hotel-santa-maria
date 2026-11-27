@@ -52,8 +52,13 @@ export function useAcao() {
     rodando.current = true;
     setOcupado(true);
     setErro(null);
+    let relogio;
     try {
-      const { data, error } = await chamada(createClient());
+      // nunca fica "carregando" para sempre: depois de 25 s desiste e avisa
+      const limite = new Promise((_, falha) => {
+        relogio = setTimeout(() => falha(new Error('TEMPO_ESGOTADO')), 25000);
+      });
+      const { data, error } = await Promise.race([chamada(createClient()), limite]);
       if (error) {
         setErro(traduzirErro(error.message));
         return { ok: false, mensagem: error.message };
@@ -61,9 +66,12 @@ export function useAcao() {
       router.refresh();
       return { ok: true, data };
     } catch (e) {
-      setErro(e.message || 'Erro inesperado.');
-      return { ok: false };
+      setErro(e?.message === 'TEMPO_ESGOTADO'
+        ? 'O sistema não respondeu. Feche as outras abas do sistema, aperte F5 para recarregar e confira se a operação foi feita antes de repetir.'
+        : e.message || 'Erro inesperado.');
+      return { ok: false, mensagem: e?.message };
     } finally {
+      clearTimeout(relogio);
       rodando.current = false;
       setOcupado(false);
     }
