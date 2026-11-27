@@ -377,7 +377,7 @@ function horaCurta(ts) {
 
 // outro: caixa aberto por outra pessoa (só pode haver um aberto por vez)
 export function Caixa({ turno, resumo, outro, gestor }) {
-  const { ocupado, erro, rodar } = useAcao();
+  const { ocupado, erro, setErro, rodar } = useAcao();
   const [abertura, setAbertura] = useState('0');
   const [contado, setContado] = useState('');
   const [troco, setTroco] = useState(null);
@@ -460,7 +460,15 @@ export function Caixa({ turno, resumo, outro, gestor }) {
         const num = (x) => Number(String(x ?? '').replace(',', '.'));
         const t = num(trocoAtual);
         const mov = num(contado);
-        if (contado === '' || Number.isNaN(mov) || Number.isNaN(t) || t < 0 || mov < 0) return;
+        if (String(contado).trim() === '') {
+          setErro('Conte o dinheiro do movimento (sem o troco) e digite o valor. Se não houve dinheiro, digite 0.');
+          document.getElementById('contado')?.focus();
+          return;
+        }
+        if (Number.isNaN(mov) || Number.isNaN(t) || t < 0 || mov < 0) {
+          setErro('Confira os valores do troco e do dinheiro contado.');
+          return;
+        }
         const total = Math.round((t + mov) * 100) / 100;
         let r = await rodar((sb) => sb.rpc('fn_fechar_turno', { p_turno: turno.id, p_valor_contado: total, p_troco: t }));
         // banco ainda sem o script do troco (hotel_fase1l.sql): fecha do jeito antigo
@@ -478,10 +486,10 @@ export function Caixa({ turno, resumo, outro, gestor }) {
           </div>
           <div className="campo">
             <label htmlFor="contado">Dinheiro do movimento (sem o troco)</label>
-            <input id="contado" type="number" step="0.01" min="0" value={contado} placeholder={esperadoMov.toFixed(2)}
-                   onChange={(e) => setContado(e.target.value)} />
+            <input id="contado" type="number" step="0.01" min="0" value={contado} placeholder="Digite o valor contado"
+                   onChange={(e) => { setContado(e.target.value); setErro(null); }} />
           </div>
-          <button type="submit" disabled={ocupado || contado === ''} style={{ alignSelf: 'end' }}>Fechar caixa</button>
+          <button type="submit" className="primario" disabled={ocupado} style={{ alignSelf: 'end' }}>{ocupado ? 'Fechando…' : 'Fechar caixa'}</button>
         </div>
         <small className="fraco">
           Movimento em dinheiro esperado: <b>{brl(esperadoMov)}</b>. O troco fica para o próximo turno e não entra no relatório.

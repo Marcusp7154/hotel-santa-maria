@@ -174,12 +174,12 @@ export function CancelarDespesa({ despesa }) {
 
 // Gerência fecha o caixa de quem saiu sem fechar
 export function FecharTurnoDeOutro({ turnoId, nome, esperado }) {
-  const { ocupado, erro, rodar } = useAcao();
+  const { ocupado, erro, setErro, rodar } = useAcao();
   const [contado, setContado] = useState('');
   return (
     <form className="acoes" onSubmit={async (e) => {
       e.preventDefault();
-      if (contado === '') return;
+      if (String(contado).trim() === '') { setErro('Digite quanto dinheiro foi contado na gaveta (pode ser 0).'); return; }
       if (!window.confirm(`Fechar o caixa de ${nome} com ${brl(contado)} contados?`)) return;
       await rodar((sb) => sb.rpc('fn_fechar_turno', {
         p_turno: turnoId, p_valor_contado: Number(String(contado).replace(',', '.')),
@@ -188,7 +188,7 @@ export function FecharTurnoDeOutro({ turnoId, nome, esperado }) {
     }}>
       <input type="number" step="0.01" min="0" placeholder={`Contado (esperado ${brl(esperado)})`} aria-label="Dinheiro contado"
              value={contado} onChange={(e) => setContado(e.target.value)} style={{ width: 190 }} />
-      <button type="submit" disabled={ocupado || contado === ''}>Fechar este caixa</button>
+      <button type="submit" disabled={ocupado}>{ocupado ? 'Fechando…' : 'Fechar este caixa'}</button>
       <Erro texto={erro} />
     </form>
   );
