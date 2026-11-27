@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { assinaturaValida, buscarPagamento, mercadoPagoAtivo, registrarPagamento } from '@/lib/mercadopago';
+import { assinaturaValida, buscarPagamento, mercadoPagoAtivo } from '@/lib/mercadopago';
+import { registrarMercadoPago } from '@/lib/pagamento-site';
 
 // Aviso do Mercado Pago (webhook). Não confia no conteúdo do aviso:
 // pega só o número do pagamento e consulta o Mercado Pago direto.
@@ -17,7 +18,7 @@ export async function POST(request) {
   }
   try {
     const pagamento = await buscarPagamento(String(dataId));
-    const resultado = await registrarPagamento(pagamento);
+    const resultado = await registrarMercadoPago(pagamento);
     return NextResponse.json({ ok: true, resultado });
   } catch (e) {
     // 500 faz o Mercado Pago tentar de novo mais tarde

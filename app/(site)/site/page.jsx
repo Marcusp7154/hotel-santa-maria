@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { infoDoHotel, linkWhatsApp } from '@/lib/site';
-import { mercadoPagoAtivo } from '@/lib/mercadopago';
+import { provedorAtivo } from '@/lib/pagamento-site';
 import { BuscaDatas } from './busca-datas';
 
 export const dynamic = 'force-dynamic';
@@ -58,7 +58,7 @@ export default async function InicioSite() {
         <ol>
           <li><b>Escolha as datas</b><span>Veja na hora os quartos livres e o valor total da estadia.</span></li>
           <li><b>Mande o pedido</b><span>Só nome e telefone. O quarto fica segurado por {hotel.prazo_horas} horas.</span></li>
-          {mercadoPagoAtivo()
+          {Boolean(provedorAtivo())
             ? <li><b>Pague o sinal e pronto</b><span>Pix ou cartão em até 12x, direto no site. A reserva sai confirmada na hora.</span></li>
             : <li><b>A recepção confirma</b><span>Entramos em contato pelo WhatsApp para confirmar e combinar o pagamento.</span></li>}
         </ol>

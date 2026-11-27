@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { consultarPedido, infoDoHotel, linkWhatsApp, statusPagamento } from '@/lib/site';
-import { conferirAbertas, mercadoPagoAtivo } from '@/lib/mercadopago';
+import { conferirAbertas, NOME_PROVEDOR, provedorAtivo } from '@/lib/pagamento-site';
 import { PagarSinal } from './pagar';
 
 export const dynamic = 'force-dynamic';
@@ -23,8 +23,9 @@ export default async function Pedido({ params, searchParams }) {
   const { codigo } = await params;
   const sp = await searchParams;
   const token = /^[0-9a-f-]{36}$/i.test(sp?.t || '') ? sp.t : null;
-  const online = mercadoPagoAtivo();
-  // voltou da tela do Mercado Pago: confere antes de mostrar
+  const provedor = provedorAtivo();
+  const online = Boolean(provedor);
+  // voltou da tela de pagamento: confere antes de mostrar
   if (token && online && sp?.pagamento === 'retorno') {
     const s0 = await statusPagamento(codigo, token);
     if (s0?.abertas?.length) await conferirAbertas(s0.abertas);
@@ -67,7 +68,7 @@ export default async function Pedido({ params, searchParams }) {
         <div className="s-pago">
           <h2>Sinal pago: {brl(pag.pago)}</h2>
           <p>
-            Recebemos pelo {NOME_FORMA[pag.forma_paga] || 'Mercado Pago'}{pag.parcelas > 1 ? ` em ${pag.parcelas}x` : ''}
+            Recebemos pelo {NOME_FORMA[pag.forma_paga] || NOME_PROVEDOR[provedor] || 'site'}{pag.parcelas > 1 ? ` em ${pag.parcelas}x` : ''}
             {pag.pago_em ? ` em ${quando(pag.pago_em)}` : ''}. O comprovante foi para o seu e-mail.
             {Number(pedido.total) - Number(pag.pago) > 0 && <> Falta pagar <b>{brl(Number(pedido.total) - Number(pag.pago))}</b> no check-in.</>}
           </p>
@@ -91,7 +92,7 @@ export default async function Pedido({ params, searchParams }) {
       {pedido.status === 'pre_reserva' && pag && !pag.pendencia && (
         <>
           <PagarSinal codigo={pedido.codigo} token={token} sinal={pag.sinal} total={pag.total} percentual={pag.percentual}
-                      temEmail={pag.tem_email} pixInicial={pag.pix} voltouDoCartao={sp?.pagamento === 'retorno'} />
+                      temEmail={pag.tem_email} pixInicial={pag.pix} provedor={provedor} nomeProvedor={NOME_PROVEDOR[provedor]} voltouDoCartao={sp?.pagamento === 'retorno'} />
           {hotel?.politica_cancelamento && <p className="s-politica">{hotel.politica_cancelamento}</p>}
           <p className="s-dica">
             Prefere combinar com a gente? {zap && <a href={zap} target="_blank" rel="noreferrer">Fale pelo WhatsApp</a>}.

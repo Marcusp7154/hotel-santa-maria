@@ -75,9 +75,9 @@ export default async function PaginaReserva({ params, searchParams }) {
       {onlinePagos.map((o) => (
         <div key={o.id} className={`mensagem ${o.pendencia && !o.resolvido_em ? 'erro' : 'ok'}`} style={{ marginBottom: 16 }}>
           <b>{o.status === 'devolvido' ? 'Sinal devolvido' : 'Sinal pago pelo site'}: R$ {Number(o.valor_pago || o.valor).toFixed(2).replace('.', ',')}</b>
-          {' · '}{o.forma === 'pix' ? 'Pix' : o.forma === 'credito' ? `cartão de crédito${o.parcelas > 1 ? ` ${o.parcelas}x` : ''}` : o.forma === 'debito' ? 'cartão de débito' : 'Mercado Pago'}
+          {' · '}{o.forma === 'pix' ? 'Pix' : o.forma === 'credito' ? `cartão de crédito${o.parcelas > 1 ? ` ${o.parcelas}x` : ''}` : o.forma === 'debito' ? 'cartão de débito' : 'online'}
           {o.aprovado_em && ` · ${new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date(o.aprovado_em))}`}
-          {o.mp_payment_id && <small> · Mercado Pago nº {o.mp_payment_id}</small>}
+          {o.mp_payment_id && <small> · {o.provedor === 'asaas' ? 'Asaas' : 'Mercado Pago'} nº {o.mp_payment_id}</small>}
           {o.pendencia && !o.resolvido_em ? (
             <span style={{ display: 'block', marginTop: 6 }}>
               <b>Atenção:</b> {o.pendencia}{' '}
@@ -86,7 +86,7 @@ export default async function PaginaReserva({ params, searchParams }) {
           ) : o.status === 'aprovado' && ['pre_reserva', 'confirmada'].includes(r.status) ? (
             <small style={{ display: 'block', marginTop: 4 }}>
               Já está na notinha como pagamento da hospedagem. Se o cliente cancelar até {horario.reembolso_site_horas ?? 48} h antes da entrada,
-              devolva o valor no painel do Mercado Pago (o sistema percebe a devolução e avisa aqui).
+              devolva o valor no painel do {o.provedor === 'asaas' ? 'Asaas' : 'Mercado Pago'} (o sistema percebe a devolução e avisa aqui).
             </small>
           ) : null}
         </div>

@@ -66,6 +66,7 @@ As regras ficam no banco (pasta `banco/`), então valem mesmo fora do painel.
 20. `banco/hotel_fase1t.sql`: trocar a forma de pagamento de um recebimento (ex.: Dinheiro para Pix) enquanto o caixa está aberto.
 21. `banco/hotel_fase1u.sql`: pagamento do sinal pelo site (Mercado Pago: Pix e cartão), com confirmação automática da reserva.
 22. `banco/hotel_fase1v.sql`: reserva confirmada ganha um quarto livre do tipo automaticamente (mapa e visão geral).
+23. `banco/hotel_fase1w.sql`: pagamento do sinal pelo site também pelo Asaas (Pix e cartão).
 
 ## Publicar na Vercel
 
@@ -102,6 +103,20 @@ Toda alteração enviada ao GitHub é publicada automaticamente pela Vercel em c
 3. Opcional: `ANTHROPIC_MODEL` troca o modelo (padrão `claude-sonnet-5-5`; `claude-haiku-5-5` é mais barato).
 
 Sem a chave, o XML continua funcionando normalmente; só o PDF e a foto avisam que falta configurar.
+
+## Pagamento do sinal pelo site (Asaas)
+
+Quando `ASAAS_API_KEY` está configurada, o site usa o Asaas (tem prioridade sobre o Mercado Pago).
+
+1. Rode `banco/hotel_fase1u.sql` e `banco/hotel_fase1w.sql` no Supabase.
+2. No Asaas: *Integrações > Chaves de API* > gerar chave. Na Vercel: `ASAAS_API_KEY` = a chave (Secret). Redeploy.
+   Chave de teste (sandbox, contém `_hmlg_`) usa o ambiente de testes automaticamente.
+3. No Asaas: *Integrações > Webhooks* > novo webhook com a URL `https://SEU-SITE/api/site/asaas`,
+   eventos de **Cobranças**, e um **token de autenticação** (32+ caracteres, sem espaços).
+   Na Vercel: `ASAAS_WEBHOOK_TOKEN` = o mesmo token.
+4. Cadastre uma chave Pix na conta Asaas e, em *Minha conta*, o site (domínio) para o retorno após o cartão.
+
+O cliente informa o CPF (exigido pelo Asaas). Cartão: à vista ou parcelado sem juros para o cliente (a taxa é do hotel).
 
 ## Pagamento do sinal pelo site (Mercado Pago)
 

@@ -94,7 +94,7 @@ export default async function Comprovante({ params, searchParams }) {
                 <td>
                   Sinal pago{pag?.forma_paga ? ` por ${NOME_FORMA[pag.forma_paga] || pag.forma_paga}` : ''}
                   {pag?.parcelas > 1 ? ` em ${pag.parcelas}x` : ''}
-                  {pag?.pago_em ? <small>em {quando(pag.pago_em)} · Mercado Pago</small> : null}
+                  {pag?.pago_em ? <small>em {quando(pag.pago_em)} · pagamento online</small> : null}
                 </td>
                 <td>− {brl(pago)}</td>
               </tr>

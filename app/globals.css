@@ -1648,3 +1648,5 @@ input.invalido { border-color: var(--alerta); }
 .mov-ponto.site { background: #009ee3; }
 .mov-resumo b.site { color: #0077b6; }
 .rt-site { border-left: 3px solid #009ee3; padding-left: 10px; }
+.s-parcelas { grid-column: 1 / -1; display: grid; gap: 6px; font-weight: 650; font-size: 14.5px; }
+.s-parcelas select { font: inherit; font-weight: 500; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--s-linha); background: #fff; }

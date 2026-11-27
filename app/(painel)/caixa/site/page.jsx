@@ -18,7 +18,7 @@ const somarMes = (m, n) => {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 };
 
-// Recebido pelo site (Mercado Pago): não passa pelo caixa da recepção; confere com o extrato do Mercado Pago
+// Recebido pelo site (Asaas ou Mercado Pago): não passa pelo caixa da recepção; confere com o extrato da empresa
 export default async function RecebidoNoSite({ searchParams }) {
   const params = await searchParams;
   const { supabase, perfil } = await contexto();
@@ -33,7 +33,7 @@ export default async function RecebidoNoSite({ searchParams }) {
   const ate = `${somarMes(mes, 1)}-01T00:00:00-03:00`;
 
   const { data, error } = await supabase.from('pagamentos_online')
-    .select('id, status, valor, valor_pago, forma, parcelas, mp_payment_id, aprovado_em, pendencia, resolvido_em, reservas ( id, codigo, status, data_checkin, hospedes ( nome ) )')
+    .select('id, status, provedor, valor, valor_pago, forma, parcelas, mp_payment_id, aprovado_em, pendencia, resolvido_em, reservas ( id, codigo, status, data_checkin, hospedes ( nome ) )')
     .in('status', ['aprovado', 'devolvido'])
     .gte('aprovado_em', de).lt('aprovado_em', ate)
     .order('aprovado_em', { ascending: false });
@@ -52,7 +52,7 @@ export default async function RecebidoNoSite({ searchParams }) {
       <div className="cabecalho nao-imprimir">
         <div>
           <h1>Caixa</h1>
-          <p>Sinais pagos pelos clientes no site (Mercado Pago).</p>
+          <p>Sinais pagos pelos clientes no site (Asaas ou Mercado Pago).</p>
         </div>
       </div>
       <AbasCaixa />
@@ -88,7 +88,7 @@ export default async function RecebidoNoSite({ searchParams }) {
               <div className="tabela-rolagem">
                 <table className="tabela">
                   <thead>
-                    <tr><th>Pago em</th><th>Reserva</th><th>Hóspede</th><th>Entrada</th><th>Forma</th><th>Nº Mercado Pago</th><th className="num">Valor</th><th>Situação</th></tr>
+                    <tr><th>Pago em</th><th>Reserva</th><th>Hóspede</th><th>Entrada</th><th>Forma</th><th>Nº do pagamento</th><th className="num">Valor</th><th>Situação</th></tr>
                   </thead>
                   <tbody>
                     {lista.map((p) => (
@@ -98,7 +98,7 @@ export default async function RecebidoNoSite({ searchParams }) {
                         <td>{p.reservas?.hospedes?.nome}</td>
                         <td>{dataBR(p.reservas?.data_checkin)}</td>
                         <td>{FORMA[p.forma] || '—'}{p.parcelas > 1 ? ` ${p.parcelas}x` : ''}</td>
-                        <td>{p.mp_payment_id || '—'}</td>
+                        <td>{p.mp_payment_id || '—'}<small className="fraco" style={{ display: 'block' }}>{p.provedor === 'asaas' ? 'Asaas' : 'Mercado Pago'}</small></td>
                         <td className="num">{brl(valor(p))}</td>
                         <td>
                           {p.status === 'devolvido' ? <span className="etiqueta cancelada">Devolvido</span>
@@ -113,8 +113,8 @@ export default async function RecebidoNoSite({ searchParams }) {
             )}
           </section>
           <p className="nota">
-            Esse dinheiro cai na conta do Mercado Pago, não na gaveta, e não entra no fechamento do caixa.
-            Para conferir, compare esta lista com o app do Mercado Pago (Atividade) pelo <b>Nº Mercado Pago</b>.
+            Esse dinheiro cai na conta da empresa de pagamento (Asaas ou Mercado Pago), não na gaveta, e não entra no fechamento do caixa.
+            Para conferir, compare esta lista com o extrato da empresa pelo <b>Nº do pagamento</b>.
             Lá aparece o valor já descontada a taxa.
           </p>
         </div>

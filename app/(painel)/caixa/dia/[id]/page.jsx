@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BotaoImprimir } from '@/app/(painel)/acoes';
 import { brl, NOME_FORMA } from '@/lib/formato';
-import { FORMAS, NOME_FORMA_SITE, pagosNoSite, quando } from '@/lib/caixa';
+import { FORMAS, NOME_FORMA_SITE, NOME_PROVEDOR, pagosNoSite, quando } from '@/lib/caixa';
 import { contexto } from '../../../funcionarios/acesso';
 
 export const dynamic = 'force-dynamic';
@@ -147,8 +147,8 @@ export default async function RelatorioDia({ params }) {
 
         {doSite.length > 0 && (
           <section className="rt-secao rt-site">
-            <h2>Pago no site (Mercado Pago) <small>{doSite.length} · {brl(totalSite)}</small></h2>
-            <p className="rt-obs" style={{ marginTop: 0 }}>Só para informação: esse dinheiro caiu no Mercado Pago, não na gaveta, e não entra no dinheiro esperado.</p>
+            <h2>Pago no site (pagamento online) <small>{doSite.length} · {brl(totalSite)}</small></h2>
+            <p className="rt-obs" style={{ marginTop: 0 }}>Só para informação: esse dinheiro caiu na conta da empresa de pagamento (Asaas ou Mercado Pago), não na gaveta, e não entra no dinheiro esperado.</p>
             <table className="rt-tabela listrada">
               <colgroup><col className="c-hora-longa" /><col /><col className="c-forma" /><col className="c-valor" /></colgroup>
               <thead><tr><th>Hora</th><th>Hóspede / reserva</th><th>Forma</th><th className="num">Valor</th></tr></thead>
@@ -158,7 +158,7 @@ export default async function RelatorioDia({ params }) {
                     <td>{hora(p.aprovado_em)}</td>
                     <td>
                       {p.reservas?.hospedes?.nome || '—'}{p.reservas?.codigo && <span className="fraco"> · {p.reservas.codigo}</span>}
-                      <small className="fraco"> · sinal pago no site{p.mp_payment_id ? ` · MP ${p.mp_payment_id}` : ''}{p.status === 'devolvido' ? ' · devolvido' : ''}</small>
+                      <small className="fraco"> · sinal pago no site{p.mp_payment_id ? ` · ${NOME_PROVEDOR[p.provedor] || 'Mercado Pago'} ${p.mp_payment_id}` : ''}{p.status === 'devolvido' ? ' · devolvido' : ''}</small>
                     </td>
                     <td>{NOME_FORMA_SITE[p.forma]}{p.parcelas > 1 ? ` ${p.parcelas}x` : ''}</td>
                     <td className="num">{brl(p.valorPago)}</td>

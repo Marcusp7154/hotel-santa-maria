@@ -6,10 +6,14 @@ import { useRouter } from 'next/navigation';
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v || 0));
 const hora = (ts) => new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date(ts));
 
-// Pagar o sinal: Pix na própria página (confirma sozinho) ou cartão na tela segura do Mercado Pago
-export function PagarSinal({ codigo, token, sinal, total, percentual, temEmail, pixInicial, voltouDoCartao }) {
+// Pagar o sinal: Pix na própria página (confirma sozinho) ou cartão na tela segura da empresa de pagamento
+export function PagarSinal({ codigo, token, sinal, total, percentual, temEmail, pixInicial, voltouDoCartao, provedor, nomeProvedor = 'Mercado Pago' }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [parcelas, setParcelas] = useState('1');
+  const pedeCpf = provedor === 'asaas';
+  const maxParcelas = Math.max(1, Math.min(12, Math.floor(Number(sinal) / 5)));
   const [carregando, setCarregando] = useState(null);
   const [erro, setErro] = useState(null);
   const [pix, setPix] = useState(pixInicial || null);
@@ -64,13 +68,18 @@ export function PagarSinal({ codigo, token, sinal, total, percentual, temEmail, 
       document.getElementById('s-email-pag')?.focus();
       return;
     }
+    if (pedeCpf && String(cpf).replace(/\D/g, '').length !== 11) {
+      setErro('Informe o CPF de quem vai pagar (exigido pelo banco).');
+      document.getElementById('s-cpf-pag')?.focus();
+      return;
+    }
     setCarregando(tipo);
     let saindo = false;
     try {
       const r = await fetch('/api/site/pagamento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo, token, tipo, email: email.trim() || null }),
+        body: JSON.stringify({ codigo, token, tipo, email: email.trim() || null, cpf: pedeCpf ? cpf : undefined, parcelas: tipo === 'cartao' ? Number(parcelas) : 1 }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { setErro(`${d.erro || 'Não foi possível iniciar o pagamento. Tente de novo.'}${d.detalhe ? ` (${d.detalhe})` : ''}`); return; }
@@ -99,7 +108,7 @@ export function PagarSinal({ codigo, token, sinal, total, percentual, temEmail, 
   if (conferindo) {
     return (
       <div className="s-pagar">
-        <div className="s-pix-espera"><span className="s-girando" aria-hidden="true" /> Conferindo o pagamento com o Mercado Pago…</div>
+        <div className="s-pix-espera"><span className="s-girando" aria-hidden="true" /> Conferindo o pagamento com o {nomeProvedor}…</div>
       </div>
     );
   }
@@ -143,6 +152,16 @@ export function PagarSinal({ codigo, token, sinal, total, percentual, temEmail, 
         </p>
       </div>
       {vencido && <p className="s-erro">O código Pix anterior venceu. Gere um novo abaixo.</p>}
+      {pedeCpf && (
+        <label className="s-campo-pag" htmlFor="s-cpf-pag">
+          CPF de quem vai pagar
+          <input id="s-cpf-pag" inputMode="numeric" autoComplete="off" value={cpf} maxLength={14} placeholder="000.000.000-00"
+                 onChange={(e) => {
+                   const d = e.target.value.replace(/\D/g, '').slice(0, 11);
+                   setCpf(d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'));
+                 }} />
+        </label>
+      )}
       {!temEmail && (
         <label className="s-campo-pag" htmlFor="s-email-pag">
           Seu e-mail (para o comprovante)
@@ -156,12 +175,24 @@ export function PagarSinal({ codigo, token, sinal, total, percentual, temEmail, 
           <small>Confirmação na hora</small>
         </button>
         <button type="button" className="s-opcao" onClick={() => pagar('cartao')} disabled={!!carregando}>
-          <b>{carregando === 'cartao' ? 'Abrindo o Mercado Pago…' : 'Cartão de crédito ou débito'}</b>
-          <small>Em até 12x, na tela segura do Mercado Pago</small>
+          <b>{carregando === 'cartao' ? `Abrindo o ${nomeProvedor}…` : pedeCpf ? 'Cartão de crédito' : 'Cartão de crédito ou débito'}</b>
+          <small>{pedeCpf
+            ? (Number(parcelas) > 1 ? `${parcelas}x de ${brl(Number(sinal) / Number(parcelas))} sem juros` : 'À vista ou parcelado sem juros')
+            : 'Em até 12x'}, na tela segura do {nomeProvedor}</small>
         </button>
+        {pedeCpf && maxParcelas > 1 && (
+          <label className="s-parcelas" htmlFor="s-parcelas">
+            Parcelar o cartão em
+            <select id="s-parcelas" value={parcelas} onChange={(e) => setParcelas(e.target.value)}>
+              {Array.from({ length: maxParcelas }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>{n === 1 ? `1x de ${brl(sinal)} (à vista)` : `${n}x de ${brl(Number(sinal) / n)} sem juros`}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       {erro && <p className="s-erro" role="alert">{erro}</p>}
-      <p className="s-seguro">Pagamento processado pelo Mercado Pago. O hotel não vê nem guarda os dados do seu cartão.</p>
+      <p className="s-seguro">Pagamento processado pelo {nomeProvedor}. O hotel não vê nem guarda os dados do seu cartão.</p>
     </div>
   );
 }
