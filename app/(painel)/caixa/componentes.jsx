@@ -25,7 +25,7 @@ export function FecharDia({ qtd }) {
 // Abas do caixa: o turno, a venda direta no balcão e as despesas
 export function AbasCaixa() {
   const caminho = usePathname();
-  const abas = [['/caixa', 'Meu caixa'], ['/caixa/vender', 'Vender'], ['/caixa/despesas', 'Despesas'], ['/caixa/dia', 'Fechamento do dia']];
+  const abas = [['/caixa', 'Meu caixa'], ['/caixa/vender', 'Vender'], ['/caixa/despesas', 'Despesas'], ['/caixa/dia', 'Fechamento do dia'], ['/caixa/site', 'Recebido no site']];
   const ativa = (h) => (h === '/caixa' ? caminho === '/caixa' : caminho.startsWith(h));
   return (
     <nav className="abas nao-imprimir">
